@@ -1,0 +1,74 @@
+{
+  "base_repository": "https://gitlab.freedesktop.org/Swung0x48/mesa",
+  "base_commit": "9ea0decb3176d34e578c3c603fd9c8e29b580f71",
+  "base_archive_sha256": "9a73f58fa70ebdabf9504eb51ccb7baca4d01cee3ece5f5dd2e681287691b2ea",
+  "normalization": "UTF-8 text; CRLF converted to LF before hashing/applying",
+  "patch_sha256": "7c0619441b41bb64a3420c5156adba5f5a9652ccbf3630eaf824f3024f17992e",
+  "files": [
+    {
+      "path": "include/vulkan/vulkan_core.h",
+      "before_sha256": "ae25fc9a4c3c7484a310842755ea5f18540270f9adcf6a9f6cbfda3934f2b666",
+      "after_sha256": "e1e4e6a89da922bb718fcde23de46a7abebb7a48699d0cd9b510c5eb4d1f14a8"
+    },
+    {
+      "path": "meson.build",
+      "before_sha256": "89cfa347dc6cfb9d4c17adaa7c7fba990b07eb94020112e1c9b220011a25de62",
+      "after_sha256": "ae436c418afdeafae5b5d13162cc209f7d8f9bee12a059978a86f94d545a482f"
+    },
+    {
+      "path": "src/gallium/drivers/zink/zink_barrier_lifetime.h",
+      "before_sha256": null,
+      "after_sha256": "61308e22c0fff402d4cd7621b9e4e2d836d3563021f032f227015a5601dfe584"
+    },
+    {
+      "path": "src/gallium/drivers/zink/zink_batch.c",
+      "before_sha256": "aa7134439eb4a82fb7e9f83f8ed9cbfe85f4c76f55b0fa00788258fb2a5a892a",
+      "after_sha256": "860415fab0c42cdaa0f70e0735ac704107fdfd046e4f33f81295454da03920a9"
+    },
+    {
+      "path": "src/gallium/drivers/zink/zink_context.c",
+      "before_sha256": "f5416a0d8e6aa2d9974609aa8c021222906a9b9c0c0e6f8d444f41f45e77fd46",
+      "after_sha256": "e3bcc8d38056562f6a3f51142253070693784383a2d3e726499e52ff56947945"
+    },
+    {
+      "path": "src/gallium/drivers/zink/zink_context.h",
+      "before_sha256": "b5176d2fd2796f2c8bd9822d2b4c61df97a7d724e4836677eadcd2badd6e9fd9",
+      "after_sha256": "2b61a14dd8115dbe08cb0b2e2ca68c3032b7ee9cef94ab917f1f05ff84868808"
+    },
+    {
+      "path": "src/gallium/drivers/zink/zink_descriptors.c",
+      "before_sha256": "875368ea51a67a4b2ae12a4c6ec98efdafe6970c256495163538cd5be748ba9c",
+      "after_sha256": "0a7a4f183ed6b2e990082d8400801b1e1e12e8a91c56dbdb39b912957f9ea58d"
+    },
+    {
+      "path": "src/gallium/drivers/zink/zink_device_info.py",
+      "before_sha256": "85438d40f460523660836e456b70d51d5650795c5d21dff7161130e089885ae1",
+      "after_sha256": "33766c4794e6d92e88449dccd26d63a0f272c7d072e63da45d1143c75025495f"
+    },
+    {
+      "path": "src/gallium/drivers/zink/zink_draw.cpp",
+      "before_sha256": "16ee4f74d2a796535cca3d52cfc7dcac230d33d1b13d99efcea779793dff1cb7",
+      "after_sha256": "375376cbfe7ee08da333250bf0318a88b55a7701cd330f04a35d41a2bffbddd1"
+    },
+    {
+      "path": "src/gallium/drivers/zink/zink_program.c",
+      "before_sha256": "531120eea2409ee4e2c01f9d5a8814bf7b66c64d51fb18f4a610bfce99d62383",
+      "after_sha256": "4a67d75cf64c889061040b37b5d61c5c0e7c924f5d3f8c68e52bbd1e1b481a25"
+    },
+    {
+      "path": "src/gallium/drivers/zink/zink_screen.c",
+      "before_sha256": "3fbe47a2c10e64a442a69eee25166cd1e7e4ce74d824ee1ed8ee5920961116a2",
+      "after_sha256": "a6457899131312d631df02545734f07b8125834ebcaee37e1a018cb12a001a13"
+    },
+    {
+      "path": "src/gallium/drivers/zink/zink_types.h",
+      "before_sha256": "3add0a14657f068f4bc3990c64febc54dfac705eca520af0af5ac6afa812c7f9",
+      "after_sha256": "560a42fe25ad94cd8e5c6df12ed879bd64daa7c28db53abbb2426b7c39e17564"
+    },
+    {
+      "path": "src/vulkan/registry/vk.xml",
+      "before_sha256": "ab2d6f99db58568a58b873ea3a367ee059994237f653226f4d677d2248b43827",
+      "after_sha256": "eed10a2109684d3bc6d01f64a1f4d01a2d1bb7169d511ee8426d62338c9eff08"
+    }
+  ]
+}

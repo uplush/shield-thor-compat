@@ -1,0 +1,184 @@
+[
+  {
+    "source": "research/video_bridge/PortVideo.java",
+    "destination": "src/java/com/nvidia/lightspeed/mediaplayer/PortVideo.java",
+    "original_sha256": "628aa924bf0f05d787e178e27a4abc0d33b956bd974c47544c6d1ef9a8100089",
+    "exported_sha256": "2066e48e267732e5ff5b62a3085b00669212354cd5603e5191961cf6543748f8",
+    "change": "MIT notice added; LF line endings; executable logic unchanged"
+  },
+  {
+    "source": "research/cutscene_black/PortMovie.java",
+    "destination": "src/java/com/nvidia/lightspeed/mediaplayer/PortMovie.java",
+    "original_sha256": "8a06c63215e2e998e102e76074e42a7d5117fd8400873ceec8cff457feeea373",
+    "exported_sha256": "154ade263fefde17d7ffed856a93d775d5cbe9cb29797527b204c9e545e6af67",
+    "change": "MIT notice added; LF line endings; executable logic unchanged"
+  },
+  {
+    "source": "research/lifecycle_bridge/PortGameView.java",
+    "destination": "src/java/com/nvidia/NvAppBase/PortGameView.java",
+    "original_sha256": "d8fb421a8200e92467fd66d18d6d867c4a0302a3ff48b47ec2942b7dad685de5",
+    "exported_sha256": "531509fad83d2b07e5eb34fc65cbb6f1084c005cf4041dd7f5f74c72cd69c948",
+    "change": "MIT notice added; LF line endings; executable logic unchanged"
+  },
+  {
+    "source": "research/lifecycle_bridge/PortLifecycle.java",
+    "destination": "src/java/com/nvidia/NvAppBase/PortLifecycle.java",
+    "original_sha256": "fffd2418433a75f9faca59f774b989ed80d8433b656d51c01ac7a8cfc571b49e",
+    "exported_sha256": "30eecf5899d00e42ca8369947fd8f06da7cd3c18ee10d0ea1ac3f1267e62b4d0",
+    "change": "MIT notice added; LF line endings; executable logic unchanged"
+  },
+  {
+    "source": "research/single_apk/BundleStore.java",
+    "destination": "src/java/com/nvidia/NvAppBase/BundleStore.java",
+    "original_sha256": "35f699826d1f5c0cb35a5ebb952e74c1fbd52e694738790fe416ee0663aaa31e",
+    "exported_sha256": "8e552d80b03c31cba0e231072293cd8a0a62ee5f357b8dff7965edc1c89d0d2b",
+    "change": "MIT notice added; LF line endings; executable logic unchanged"
+  },
+  {
+    "source": "research/single_apk/PortBundle.java",
+    "destination": "src/java/com/nvidia/NvAppBase/PortBundle.java",
+    "original_sha256": "fd4366b0de3017135b1cf3bdcab75c7f523eac79bb3c66dc546d6aa8001dbe58",
+    "exported_sha256": "8cfd5c73829c444a361a6c611a09f69f4cdf33fb2bcf641b3d46ca9a019ff03a",
+    "change": "MIT notice added; LF line endings; executable logic unchanged"
+  },
+  {
+    "source": "research/video_bridge/video_upload.c",
+    "destination": "src/native/video_upload.c",
+    "original_sha256": "99c4fafef62bb22635f4b4cba7ac40b8a60a530759b19f4e9f8d86af8b99957b",
+    "exported_sha256": "fd767fbf34f20bd91a1d2da470fb0a1936b9d43da23630e4a224ada351ed0085",
+    "change": "MIT notice added; LF line endings; executable logic unchanged"
+  },
+  {
+    "source": "research/single_apk/HostStoreTest.java",
+    "destination": "tests/bundle/HostStoreTest.java",
+    "original_sha256": "620b35ed0f450f3301176b9b611aaef6002ddf8cb2341d2b9b61ae07c0b91be0",
+    "exported_sha256": "61e6d52e18b6daa67a5f65204492d119742522267aab718ad31c40a02c21705f",
+    "change": "MIT notice added; LF line endings; executable logic unchanged"
+  },
+  {
+    "source": "research/cutscene_black/clock_host_test/android/media/AudioTrack.java",
+    "destination": "tests/clock/android/media/AudioTrack.java",
+    "original_sha256": "be12b81420d80d9d1711f4a02aade059881b980a990e93e46bb64d99eb364dbd",
+    "exported_sha256": "46a701118a1785800ce842006b9f02677d60a772f7f176f29d5535f9a049259b",
+    "change": "MIT notice added; LF line endings; executable logic unchanged"
+  },
+  {
+    "source": "research/cutscene_black/clock_host_test/android/media/MediaCodec.java",
+    "destination": "tests/clock/android/media/MediaCodec.java",
+    "original_sha256": "0a4cd5f9975cc7d7e7f9e9030c0a79e89ae0a0db02060568b1120400824261fc",
+    "exported_sha256": "571e97db100869dad7f37a13ce3f8a2ac77a173e494ed89e7f38fa4fdabb9786",
+    "change": "MIT notice added; LF line endings; executable logic unchanged"
+  },
+  {
+    "source": "research/cutscene_black/clock_host_test/android/media/MediaSync.java",
+    "destination": "tests/clock/android/media/MediaSync.java",
+    "original_sha256": "c840fdd43bc1de310f63cadf31b9643d9cdf4406c99b8d60de5f2775460c066d",
+    "exported_sha256": "4f2326e6c4580681cb01acc122ea9005d80e72c6abc5c022d18d7866ffe886e8",
+    "change": "MIT notice added; LF line endings; executable logic unchanged"
+  },
+  {
+    "source": "research/cutscene_black/clock_host_test/android/media/MediaTimestamp.java",
+    "destination": "tests/clock/android/media/MediaTimestamp.java",
+    "original_sha256": "426e1f0c4ea8ec23fd98d8a3e93f28190e9dcd107368bb573e4a918a547f93a2",
+    "exported_sha256": "45bc45520e19c38a268b3b8d547333c06b81edee5070be4a0a4c86a29fa2127c",
+    "change": "MIT notice added; LF line endings; executable logic unchanged"
+  },
+  {
+    "source": "research/cutscene_black/clock_host_test/android/media/PlaybackParams.java",
+    "destination": "tests/clock/android/media/PlaybackParams.java",
+    "original_sha256": "b7b4910a8ef94bdcc41833b77007f102446e6f0b1cfbd1f1bc3b0919bb6b59a5",
+    "exported_sha256": "04d80bc3f318bfbbced40a668a36bdadee06a02deff55eb4b908ac9d38a473ec",
+    "change": "MIT notice added; LF line endings; executable logic unchanged"
+  },
+  {
+    "source": "research/cutscene_black/clock_host_test/android/util/Log.java",
+    "destination": "tests/clock/android/util/Log.java",
+    "original_sha256": "e63d533ed2e729c31c7326c63f79c6b983a91978d76edf642456ff28b558ddf8",
+    "exported_sha256": "3f9dea36b1029b12558d51236c546185ea17990c5679a49f4f0c46886d1f4653",
+    "change": "MIT notice added; LF line endings; executable logic unchanged"
+  },
+  {
+    "source": "research/cutscene_black/clock_host_test/android/view/Surface.java",
+    "destination": "tests/clock/android/view/Surface.java",
+    "original_sha256": "8fc4b9e332ffa250fdc60de4d0db80ca12e734d07852c012f68b68ceb8e58933",
+    "exported_sha256": "d12d730a139a1bacff01df81db5626a2b04477ff5bed07df4ebb755b50f36910",
+    "change": "MIT notice added; LF line endings; executable logic unchanged"
+  },
+  {
+    "source": "research/cutscene_black/clock_host_test/HostClock.java",
+    "destination": "tests/clock/HostClock.java",
+    "original_sha256": "170f3dd88a16465ee2c31ab7d3f86b2995e1db9ac0d8e79e6b9bfdd983eb7fa4",
+    "exported_sha256": "f3b428f6ab316d6aa035b0a41338b3577bdcbc1936fbffdcbf62bccbd3c91428",
+    "change": "MIT notice added; LF line endings; executable logic unchanged"
+  },
+  {
+    "source": "research/lifecycle_bridge/host_test/android/content/Context.java",
+    "destination": "tests/lifecycle/android/content/Context.java",
+    "original_sha256": "a646a8868aaa20ebc1df77e072ea659e9dd882510595d86d571cfec7221bb304",
+    "exported_sha256": "f67a7d68d0b55cfc841dc0718358521808161ff1c5e3bbf4334287f452d64f0d",
+    "change": "MIT notice added; LF line endings; executable logic unchanged"
+  },
+  {
+    "source": "research/lifecycle_bridge/host_test/android/graphics/Canvas.java",
+    "destination": "tests/lifecycle/android/graphics/Canvas.java",
+    "original_sha256": "400aa09ad7ee112f3845554fc74c34ec765e4d6cedea83aeb5b411badb419692",
+    "exported_sha256": "24f3a058182a94a37ac82f65d1c40c6033c794a491e62600f31cbf108f0aab46",
+    "change": "MIT notice added; LF line endings; executable logic unchanged"
+  },
+  {
+    "source": "research/lifecycle_bridge/host_test/android/graphics/PixelFormat.java",
+    "destination": "tests/lifecycle/android/graphics/PixelFormat.java",
+    "original_sha256": "2a1508e2e9dcc9c9501deb98480ee1aba3f768d79710722093f4df64aa81ba91",
+    "exported_sha256": "0620de696442c71171e3d96977095dd407fb3512bb1628b5fcba6941b9d0ef77",
+    "change": "MIT notice added; LF line endings; executable logic unchanged"
+  },
+  {
+    "source": "research/lifecycle_bridge/host_test/android/graphics/Rect.java",
+    "destination": "tests/lifecycle/android/graphics/Rect.java",
+    "original_sha256": "e0541185b5a102a0fe29699c25f54581340fc654998bcbbf46f3be6dd5f192bb",
+    "exported_sha256": "5403822c90632a849179c123703758038406d9538d2f5d388794f384ab0c2404",
+    "change": "MIT notice added; LF line endings; executable logic unchanged"
+  },
+  {
+    "source": "research/lifecycle_bridge/host_test/android/graphics/SurfaceTexture.java",
+    "destination": "tests/lifecycle/android/graphics/SurfaceTexture.java",
+    "original_sha256": "fea2702ec3229839cee5d724c53fece8f6305a36a5aee35b5c46f26e64a984bb",
+    "exported_sha256": "3ec5716c922344e4d3d35f5d65ee8dd7de799af01d162d528a45e2c25a598d40",
+    "change": "MIT notice added; LF line endings; executable logic unchanged"
+  },
+  {
+    "source": "research/lifecycle_bridge/host_test/android/util/Log.java",
+    "destination": "tests/lifecycle/android/util/Log.java",
+    "original_sha256": "86f22577c99b603b9b724bab87c140ebb274119737abc2c81baccc471011849e",
+    "exported_sha256": "b056daee3a7cc87dc985e948187a725aa8af35c80cf5333fcef1cea6cbf6c428",
+    "change": "MIT notice added; LF line endings; executable logic unchanged"
+  },
+  {
+    "source": "research/lifecycle_bridge/host_test/android/view/Surface.java",
+    "destination": "tests/lifecycle/android/view/Surface.java",
+    "original_sha256": "a8036c9ac149229632de913a114ad682028d1a84376ea8df9a30e5af1145ae65",
+    "exported_sha256": "df04edf3e7efde3ccb27b9d02eec1226a50b3ce6c0c92ef2b2f0e98c2509dc2a",
+    "change": "MIT notice added; LF line endings; executable logic unchanged"
+  },
+  {
+    "source": "research/lifecycle_bridge/host_test/android/view/SurfaceHolder.java",
+    "destination": "tests/lifecycle/android/view/SurfaceHolder.java",
+    "original_sha256": "92a8ba2c3aeaca31c0824b811b178cfb855dc5f17e325f6ef08e1779c08b8b98",
+    "exported_sha256": "c5796f5c2796c86cbabcd8c86bd360e70f8adc8ad50b5e482ddfe487d821fd0d",
+    "change": "MIT notice added; LF line endings; executable logic unchanged"
+  },
+  {
+    "source": "research/lifecycle_bridge/host_test/android/view/TextureView.java",
+    "destination": "tests/lifecycle/android/view/TextureView.java",
+    "original_sha256": "82826892ac850427b28b563a8bca826d0621ca7583184f30229a403f9b75a05e",
+    "exported_sha256": "91e6b20610447ace292fc749eb4eacd437385ced730a541bce0974e7353eb16e",
+    "change": "MIT notice added; LF line endings; executable logic unchanged"
+  },
+  {
+    "source": "research/lifecycle_bridge/host_test/HostTest.java",
+    "destination": "tests/lifecycle/HostTest.java",
+    "original_sha256": "e086f202b069934a345305ce99f992d3c54db88134b02258445765a586403b37",
+    "exported_sha256": "f8feb37f2a601a56207d40f712a9aef969b5f42899b6079b72b21e74b4c7a9b9",
+    "change": "MIT notice added; LF line endings; executable logic unchanged"
+  }
+]

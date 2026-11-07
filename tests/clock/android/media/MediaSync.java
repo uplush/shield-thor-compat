@@ -1,0 +1,3 @@
+// SPDX-License-Identifier: MIT
+// Copyright (c) 2026 shield-thor-compat contributors
+package android.media; import android.view.Surface; import java.nio.ByteBuffer; public class MediaSync { public float speed; public int queued; public long us; public Surface output,input; public AudioTrack track; public void setSurface(Surface s){output=s;} public Surface createInputSurface(){if(output==null)throw new IllegalStateException();return input=new Surface();} public void setPlaybackParams(PlaybackParams p){speed=p.speed;} public void setAudioTrack(AudioTrack t){track=t;} public void queueAudio(ByteBuffer b,int id,long p){if(!b.hasRemaining())throw new IllegalArgumentException();queued++;} public MediaTimestamp getTimestamp(){return new MediaTimestamp(us);} }

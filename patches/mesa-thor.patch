@@ -1,0 +1,684 @@
+diff --git a/include/vulkan/vulkan_core.h b/include/vulkan/vulkan_core.h
+--- a/include/vulkan/vulkan_core.h
++++ b/include/vulkan/vulkan_core.h
+@@ -16863,6 +16863,26 @@
+     uint32_t                                    stride);
+ #endif
+ 
++/* Backport of Khronos Vulkan-Headers v1.4.304, Apache-2.0 OR MIT. */
++#ifndef VK_EXT_legacy_vertex_attributes
++#define VK_STRUCTURE_TYPE_PHYSICAL_DEVICE_LEGACY_VERTEX_ATTRIBUTES_FEATURES_EXT ((VkStructureType)1000495000)
++#define VK_STRUCTURE_TYPE_PHYSICAL_DEVICE_LEGACY_VERTEX_ATTRIBUTES_PROPERTIES_EXT ((VkStructureType)1000495001)
++#define VK_EXT_legacy_vertex_attributes 1
++#define VK_EXT_LEGACY_VERTEX_ATTRIBUTES_SPEC_VERSION 1
++#define VK_EXT_LEGACY_VERTEX_ATTRIBUTES_EXTENSION_NAME "VK_EXT_legacy_vertex_attributes"
++typedef struct VkPhysicalDeviceLegacyVertexAttributesFeaturesEXT {
++    VkStructureType    sType;
++    void*              pNext;
++    VkBool32           legacyVertexAttributes;
++} VkPhysicalDeviceLegacyVertexAttributesFeaturesEXT;
++
++typedef struct VkPhysicalDeviceLegacyVertexAttributesPropertiesEXT {
++    VkStructureType    sType;
++    void*              pNext;
++    VkBool32           nativeUnalignedPerformance;
++} VkPhysicalDeviceLegacyVertexAttributesPropertiesEXT;
++#endif
++
+ #ifdef __cplusplus
+ }
+ #endif
+diff --git a/meson.build b/meson.build
+--- a/meson.build
++++ b/meson.build
+@@ -1022,7 +1022,7 @@
+ has_mako = run_command(
+   prog_python, '-c',
+   '''
+-from distutils.version import StrictVersion
++from packaging.version import Version as StrictVersion
+ import mako
+ assert StrictVersion(mako.__version__) >= StrictVersion("0.8.0")
+   ''', check: false)
+@@ -2031,7 +2031,7 @@
+   if prog_flex.found()
+     # windows compatibility (uses <io.h> instead of <unistd.h> and _isatty,
+     # _fileno functions)
+-    prog_flex = [prog_flex, '--wincompat']
++    prog_flex = host_machine.system() != 'windows' ? [prog_flex] : [prog_flex, '--wincompat']
+   else
+     prog_flex = [find_program('flex', 'lex', required : with_any_opengl, disabler : true)]
+   endif
+@@ -2486,3 +2486,4 @@
+ indent = '        '
+ summary = indent + ('\n' + indent).join(lines)
+ message('Configuration summary:\n@0@\n'.format(summary))
++
+diff --git a/src/gallium/drivers/zink/zink_barrier_lifetime.h b/src/gallium/drivers/zink/zink_barrier_lifetime.h
+new file mode 100644
+--- /dev/null
++++ b/src/gallium/drivers/zink/zink_barrier_lifetime.h
+@@ -0,0 +1,56 @@
++#ifndef ZINK_BARRIER_LIFETIME_H
++#define ZINK_BARRIER_LIFETIME_H
++#include "util/set.h"
++#include "util/hash_table.h"
++#include "util/u_inlines.h"
++
++/* A deferred barrier outlives the binding that queued it. In shared contexts,
++ * another context may drop the last binding/reference before this set is read.
++ * Each unique entry owns exactly one pipe_resource reference until removed.
++ * The current->next barrier-set transfer acquires before releasing its source.
++ * Do not replace this with an invalid-pointer check or skip required barriers.
++ */
++static inline struct set_entry *
++zink_barrier_add_pre_hashed(struct set *set, uint32_t hash, struct zink_resource *res)
++{
++   bool found = false;
++   struct set_entry *entry = _mesa_set_search_or_add_pre_hashed(set, hash, res, &found);
++   if (entry && !found) {
++      struct pipe_resource *owned = NULL;
++      pipe_resource_reference(&owned, &res->base.b);
++   }
++   return entry;
++}
++
++static inline struct set_entry *
++zink_barrier_add(struct set *set, struct zink_resource *res)
++{
++   return zink_barrier_add_pre_hashed(set, _mesa_hash_pointer(res), res);
++}
++
++static inline void
++zink_barrier_remove(struct set *set, struct set_entry *entry)
++{
++   if (!entry)
++      return;
++   struct pipe_resource *owned = &((struct zink_resource *)entry->key)->base.b;
++   _mesa_set_remove(set, entry);
++   pipe_resource_reference(&owned, NULL);
++}
++
++static inline void
++zink_barrier_remove_key(struct set *set, struct zink_resource *res)
++{
++   zink_barrier_remove(set, _mesa_set_search(set, res));
++}
++
++static inline void
++zink_barrier_clear(struct set *set)
++{
++   /* Zero-initialized sets are possible on failed context construction. */
++   if (!set->entries)
++      return;
++   set_foreach(set, entry)
++      zink_barrier_remove(set, entry);
++}
++#endif
+diff --git a/src/gallium/drivers/zink/zink_batch.c b/src/gallium/drivers/zink/zink_batch.c
+--- a/src/gallium/drivers/zink/zink_batch.c
++++ b/src/gallium/drivers/zink/zink_batch.c
+@@ -94,13 +94,14 @@
+    }
+ 
+    /* this is where bindless texture/buffer ids get recycled */
+-   for (unsigned i = 0; i < 2; i++) {
+-      while (util_dynarray_contains(&bs->bindless_releases[i], uint32_t)) {
+-         uint32_t handle = util_dynarray_pop(&bs->bindless_releases[i], uint32_t);
+-         bool is_buffer = ZINK_BINDLESS_IS_BUFFER(handle);
+-         struct util_idalloc *ids = i ? &ctx->di.bindless[is_buffer].img_slots : &ctx->di.bindless[is_buffer].tex_slots;
+-         util_idalloc_free(ids, is_buffer ? handle - ZINK_MAX_BINDLESS_HANDLES : handle);
+-      }
++   while (util_dynarray_contains(&bs->texture_handle_unrefs, struct zink_bindless_descriptor *)) {
++      struct zink_bindless_descriptor *bd = util_dynarray_pop(&bs->texture_handle_unrefs, struct zink_bindless_descriptor *);
++      zink_texture_handle_unref(screen, bd);
++   }
++   while (util_dynarray_contains(&bs->bindless_releases[1], uint32_t)) {
++      uint32_t handle = util_dynarray_pop(&bs->bindless_releases[1], uint32_t);
++      bool is_buffer = ZINK_BINDLESS_IS_BUFFER(handle);
++      util_idalloc_free(&ctx->di.bindless[is_buffer].img_slots, is_buffer ? handle - ZINK_MAX_BINDLESS_HANDLES : handle);
+    }
+ 
+    /* queries must only be destroyed once they are inactive */
+@@ -266,6 +267,10 @@
+    util_dynarray_fini(&bs->zombie_samplers);
+    util_dynarray_fini(&bs->dead_framebuffers);
+    util_dynarray_fini(&bs->unref_resources);
++   /* Teardown also follows queue completion. Don't strand delayed owner refs. */
++   while (util_dynarray_contains(&bs->texture_handle_unrefs, struct zink_bindless_descriptor *))
++      zink_texture_handle_unref(screen, util_dynarray_pop(&bs->texture_handle_unrefs, struct zink_bindless_descriptor *));
++   util_dynarray_fini(&bs->texture_handle_unrefs);
+    util_dynarray_fini(&bs->bindless_releases[0]);
+    util_dynarray_fini(&bs->bindless_releases[1]);
+    util_dynarray_fini(&bs->acquires);
+@@ -334,6 +339,7 @@
+    util_dynarray_init(&bs->acquires, NULL);
+    util_dynarray_init(&bs->unref_semaphores, NULL);
+    util_dynarray_init(&bs->acquire_flags, NULL);
++   util_dynarray_init(&bs->texture_handle_unrefs, NULL);
+    util_dynarray_init(&bs->bindless_releases[0], NULL);
+    util_dynarray_init(&bs->bindless_releases[1], NULL);
+    util_dynarray_init(&bs->swapchain_obj, NULL);
+diff --git a/src/gallium/drivers/zink/zink_context.c b/src/gallium/drivers/zink/zink_context.c
+--- a/src/gallium/drivers/zink/zink_context.c
++++ b/src/gallium/drivers/zink/zink_context.c
+@@ -29,6 +29,7 @@
+ #include "zink_framebuffer.h"
+ #include "zink_helpers.h"
+ #include "zink_inlines.h"
++#include "zink_barrier_lifetime.h"
+ #include "zink_kopper.h"
+ #include "zink_program.h"
+ #include "zink_query.h"
+@@ -93,11 +94,19 @@
+    }
+ }
+ 
++static void texture_handle_residency(struct zink_context *ctx, struct zink_bindless_descriptor *bd, bool resident);
++
+ static void
+ zink_context_destroy(struct pipe_context *pctx)
+ {
+    struct zink_context *ctx = zink_context(pctx);
+    struct zink_screen *screen = zink_screen(pctx->screen);
++
++   /* A creator may die while another shared context still owns a residency. */
++   while (util_dynarray_contains(&ctx->di.bindless[0].resident, struct zink_bindless_descriptor *)) {
++      struct zink_bindless_descriptor *bd = util_dynarray_top(&ctx->di.bindless[0].resident, struct zink_bindless_descriptor *);
++      texture_handle_residency(ctx, bd, false);
++   }
+ 
+    if (util_queue_is_initialized(&screen->flush_queue))
+       util_queue_finish(&screen->flush_queue);
+@@ -152,7 +161,6 @@
+    }
+ 
+    for (unsigned i = 0; i < 2; i++) {
+-      util_idalloc_fini(&ctx->di.bindless[i].tex_slots);
+       util_idalloc_fini(&ctx->di.bindless[i].img_slots);
+       free(ctx->di.bindless[i].buffer_infos);
+       free(ctx->di.bindless[i].img_infos);
+@@ -186,6 +194,11 @@
+    slab_destroy_child(&ctx->transfer_pool_unsync);
+ 
+    zink_descriptors_deinit(ctx);
++
++   /* Pending barriers own references even when another shared context unbinds. */
++   for (unsigned i = 0; i < 2; i++)
++      for (unsigned j = 0; j < 2; j++)
++         zink_barrier_clear(&ctx->update_barriers[i][j]);
+ 
+    if (!(ctx->flags & ZINK_CONTEXT_COPY_ONLY))
+       p_atomic_dec(&screen->base.num_contexts);
+@@ -1221,7 +1234,7 @@
+    if (decrement) {
+       assert(res->bind_count[is_compute]);
+       if (!--res->bind_count[is_compute])
+-         _mesa_set_remove_key(ctx->need_barriers[is_compute], res);
++         zink_barrier_remove_key(ctx->need_barriers[is_compute], res);
+       check_resource_for_batch_ref(ctx, res);
+    } else
+       res->bind_count[is_compute]++;
+@@ -1636,12 +1649,12 @@
+    VkImageLayout other_layout = res->bind_count[!is_compute] ? zink_descriptor_util_image_layout_eval(ctx, res, !is_compute) : VK_IMAGE_LAYOUT_UNDEFINED;
+    if (!is_compute && res->fb_binds && !(ctx->feedback_loops & res->fb_binds)) {
+       /* always double check feedback loops */
+-      _mesa_set_add(ctx->need_barriers[0], res);
++      zink_barrier_add(ctx->need_barriers[0], res);
+    } else {
+       if (res->bind_count[is_compute] && layout && res->layout != layout)
+-         _mesa_set_add(ctx->need_barriers[is_compute], res);
++         zink_barrier_add(ctx->need_barriers[is_compute], res);
+       if (res->bind_count[!is_compute] && other_layout && (layout != other_layout || res->layout != other_layout))
+-         _mesa_set_add(ctx->need_barriers[!is_compute], res);
++         zink_barrier_add(ctx->need_barriers[!is_compute], res);
+    }
+ }
+ 
+@@ -1991,6 +2004,48 @@
+    }
+ }
+ 
++/* Adapted from Mesa a7cd6c952d53: screen-wide IDs plus deferred references.
++ * This 23.0.4 backport retains the older surface/buffer-view ownership model.
++ * It does not alter GL validation, report false residency, or skip Vulkan work. */
++void
++zink_texture_handle_unref(struct zink_screen *screen, struct zink_bindless_descriptor *bd)
++{
++   if (!p_atomic_dec_zero(&bd->texture_refcount))
++      return;
++   simple_mtx_lock(&screen->texture_handles.lock);
++   uint32_t slot = bd->handle;
++   if (bd->ds.is_buffer) slot -= ZINK_MAX_BINDLESS_HANDLES;
++   util_idalloc_free(&screen->texture_handles.table[bd->ds.is_buffer].slots, slot);
++   simple_mtx_unlock(&screen->texture_handles.lock);
++   if (bd->sampler) {
++      VKSCR(DestroySampler)(screen->dev, bd->sampler->sampler, NULL);
++      if (bd->sampler->sampler_clamped)
++         VKSCR(DestroySampler)(screen->dev, bd->sampler->sampler_clamped, NULL);
++      if (bd->sampler->custom_border_color)
++         p_atomic_dec(&screen->cur_custom_border_color_samplers);
++      free(bd->sampler);
++   }
++   if (bd->ds.is_buffer)
++      zink_buffer_view_reference(screen, &bd->ds.bufferview, NULL);
++   else
++      zink_surface_reference(screen, &bd->ds.surface, NULL);
++   pipe_resource_reference(&bd->texture_resource, NULL);
++   free(bd);
++}
++
++static struct zink_bindless_descriptor *
++find_texture_handle(struct zink_screen *screen, uint64_t handle, bool remove)
++{
++   struct hash_table *ht = &screen->texture_handles.table[ZINK_BINDLESS_IS_BUFFER(handle)].handles;
++   simple_mtx_lock(&screen->texture_handles.lock);
++   struct hash_entry *he = _mesa_hash_table_search(ht, (void*)(uintptr_t)handle);
++   assert(he);
++   struct zink_bindless_descriptor *bd = he->data;
++   if (remove) _mesa_hash_table_remove(ht, he);
++   simple_mtx_unlock(&screen->texture_handles.lock);
++   return bd;
++}
++
+ static uint64_t
+ zink_create_texture_handle(struct pipe_context *pctx, struct pipe_sampler_view *view, const struct pipe_sampler_state *state)
+ {
+@@ -2013,11 +2068,22 @@
+       zink_buffer_view_reference(zink_screen(pctx->screen), &bd->ds.bufferview, sv->buffer_view);
+    else
+       zink_surface_reference(zink_screen(pctx->screen), &bd->ds.surface, sv->image_view);
+-   uint64_t handle = util_idalloc_alloc(&ctx->di.bindless[bd->ds.is_buffer].tex_slots);
+-   if (bd->ds.is_buffer)
+-      handle += ZINK_MAX_BINDLESS_HANDLES;
++   struct zink_screen *screen = zink_screen(pctx->screen);
++   bd->texture_refcount = 1;
++   pipe_resource_reference(&bd->texture_resource, view->texture);
++   simple_mtx_lock(&screen->texture_handles.lock);
++   uint64_t handle = util_idalloc_alloc(&screen->texture_handles.table[bd->ds.is_buffer].slots);
++   /* Descriptor arrays have a real bound: fail allocation rather than overwrite. */
++   if (handle >= ZINK_MAX_BINDLESS_HANDLES) {
++      bd->handle = handle + (bd->ds.is_buffer ? ZINK_MAX_BINDLESS_HANDLES : 0);
++      simple_mtx_unlock(&screen->texture_handles.lock);
++      zink_texture_handle_unref(screen, bd);
++      return 0;
++   }
++   if (bd->ds.is_buffer) handle += ZINK_MAX_BINDLESS_HANDLES;
+    bd->handle = handle;
+-   _mesa_hash_table_insert(&ctx->di.bindless[bd->ds.is_buffer].tex_handles, (void*)(uintptr_t)handle, bd);
++   _mesa_hash_table_insert(&screen->texture_handles.table[bd->ds.is_buffer].handles, (void*)(uintptr_t)handle, bd);
++   simple_mtx_unlock(&screen->texture_handles.lock);
+    return handle;
+ }
+ 
+@@ -2025,22 +2091,8 @@
+ zink_delete_texture_handle(struct pipe_context *pctx, uint64_t handle)
+ {
+    struct zink_context *ctx = zink_context(pctx);
+-   bool is_buffer = ZINK_BINDLESS_IS_BUFFER(handle);
+-   struct hash_entry *he = _mesa_hash_table_search(&ctx->di.bindless[is_buffer].tex_handles, (void*)(uintptr_t)handle);
+-   assert(he);
+-   struct zink_bindless_descriptor *bd = he->data;
+-   struct zink_descriptor_surface *ds = &bd->ds;
+-   _mesa_hash_table_remove(&ctx->di.bindless[is_buffer].tex_handles, he);
+-   uint32_t h = handle;
+-   util_dynarray_append(&ctx->batch.state->bindless_releases[0], uint32_t, h);
+-
+-   if (ds->is_buffer) {
+-      zink_buffer_view_reference(zink_screen(pctx->screen), &ds->bufferview, NULL);
+-   } else {
+-      zink_surface_reference(zink_screen(pctx->screen), &ds->surface, NULL);
+-      pctx->delete_sampler_state(pctx, bd->sampler);
+-   }
+-   free(ds);
++   struct zink_bindless_descriptor *bd = find_texture_handle(zink_screen(pctx->screen), handle, true);
++   util_dynarray_append(&ctx->batch.state->texture_handle_unrefs, struct zink_bindless_descriptor *, bd);
+ }
+ 
+ static void
+@@ -2085,18 +2137,16 @@
+ }
+ 
+ static void
+-zink_make_texture_handle_resident(struct pipe_context *pctx, uint64_t handle, bool resident)
+-{
+-   struct zink_context *ctx = zink_context(pctx);
++texture_handle_residency(struct zink_context *ctx, struct zink_bindless_descriptor *bd, bool resident)
++{
++   uint64_t handle = bd->handle;
+    bool is_buffer = ZINK_BINDLESS_IS_BUFFER(handle);
+-   struct hash_entry *he = _mesa_hash_table_search(&ctx->di.bindless[is_buffer].tex_handles, (void*)(uintptr_t)handle);
+-   assert(he);
+-   struct zink_bindless_descriptor *bd = he->data;
+    struct zink_descriptor_surface *ds = &bd->ds;
+    struct zink_resource *res = zink_descriptor_surface_resource(ds);
+    if (is_buffer)
+       handle -= ZINK_MAX_BINDLESS_HANDLES;
+    if (resident) {
++      p_atomic_inc(&bd->texture_refcount);
+       update_res_bind_count(ctx, res, false, false);
+       update_res_bind_count(ctx, res, true, false);
+       res->bindless[0]++;
+@@ -2124,6 +2174,7 @@
+       res->obj->unordered_read = false;
+    } else {
+       zero_bindless_descriptor(ctx, handle, is_buffer, false);
++      util_dynarray_append(&ctx->batch.state->texture_handle_unrefs, struct zink_bindless_descriptor *, bd);
+       util_dynarray_delete_unordered(&ctx->di.bindless[0].resident, struct zink_bindless_descriptor *, bd);
+       update_res_bind_count(ctx, res, false, true);
+       update_res_bind_count(ctx, res, true, true);
+@@ -2134,6 +2185,13 @@
+       }
+    }
+    ctx->di.bindless_dirty[0] = true;
++}
++
++static void
++zink_make_texture_handle_resident(struct pipe_context *pctx, uint64_t handle, bool resident)
++{
++   struct zink_bindless_descriptor *bd = find_texture_handle(zink_screen(pctx->screen), handle, false);
++   texture_handle_residency(zink_context(pctx), bd, resident);
+ }
+ 
+ static uint64_t
+@@ -2962,7 +3020,7 @@
+    }
+    res->fb_bind_count--;
+    if (!res->fb_bind_count && !res->bind_count[0])
+-      _mesa_set_remove_key(ctx->need_barriers[0], res);
++      zink_barrier_remove_key(ctx->need_barriers[0], res);
+    unsigned feedback_loops = ctx->feedback_loops;
+    if (ctx->feedback_loops & BITFIELD_BIT(idx)) {
+       ctx->dynamic_fb.attachments[idx].imageLayout = VK_IMAGE_LAYOUT_COLOR_ATTACHMENT_OPTIMAL;
+@@ -2986,7 +3044,7 @@
+       if (res->sampler_bind_count[0]) {
+          update_res_sampler_layouts(ctx, res);
+          if (res->layout != VK_IMAGE_LAYOUT_SHADER_READ_ONLY_OPTIMAL)
+-            _mesa_set_add(ctx->need_barriers[0], res);
++            zink_barrier_add(ctx->need_barriers[0], res);
+       }
+    }
+ }
+@@ -3442,11 +3500,11 @@
+       if ((res->obj->is_buffer && res->vbo_bind_mask && !(pipeline & VK_PIPELINE_STAGE_VERTEX_INPUT_BIT)) ||
+           ((!res->obj->is_buffer || util_bitcount(res->vbo_bind_mask) != res->bind_count[0]) && !is_shader_pipline_stage(pipeline)))
+          /* gfx rebind */
+-         _mesa_set_add(ctx->need_barriers[0], res);
++         zink_barrier_add(ctx->need_barriers[0], res);
+    }
+    if (res->bind_count[1] && !(pipeline & VK_PIPELINE_STAGE_COMPUTE_SHADER_BIT))
+       /* compute rebind */
+-      _mesa_set_add(ctx->need_barriers[1], res);
++      zink_barrier_add(ctx->need_barriers[1], res);
+ }
+ 
+ static inline bool
+@@ -3502,10 +3560,10 @@
+    }
+    /* queue a layout change if a layout change will be needed */
+    if (res->bind_count[!is_compute])
+-      _mesa_set_add(ctx->need_barriers[!is_compute], res);
++      zink_barrier_add(ctx->need_barriers[!is_compute], res);
+    /* also queue a layout change if this is a non-shader layout */
+    if (res->bind_count[is_compute] && !is_shader)
+-      _mesa_set_add(ctx->need_barriers[is_compute], res);
++      zink_barrier_add(ctx->need_barriers[is_compute], res);
+ }
+ 
+ void
+@@ -4636,7 +4694,7 @@
+           if (zink_resource(ctx->image_views[i][j].base.resource) == res) {
+              zink_context_invalidate_descriptor_state(ctx, i, ZINK_DESCRIPTOR_TYPE_IMAGE, j, 1);
+              update_descriptor_state_image(ctx, i, j, res);
+-             _mesa_set_add(ctx->need_barriers[i == MESA_SHADER_COMPUTE], res);
++             zink_barrier_add(ctx->need_barriers[i == MESA_SHADER_COMPUTE], res);
+           }
+        }
+     }
+@@ -4715,7 +4773,7 @@
+             image_view->surface = create_image_surface(ctx, &image_view->base, i == MESA_SHADER_COMPUTE);
+             zink_context_invalidate_descriptor_state(ctx, i, ZINK_DESCRIPTOR_TYPE_IMAGE, j, 1);
+             update_descriptor_state_image(ctx, i, j, res);
+-            _mesa_set_add(ctx->need_barriers[i == MESA_SHADER_COMPUTE], res);
++            zink_barrier_add(ctx->need_barriers[i == MESA_SHADER_COMPUTE], res);
+          }
+       }
+    }
+@@ -4999,11 +5057,8 @@
+       ctx->base.make_image_handle_resident = zink_make_image_handle_resident;
+       for (unsigned i = 0; i < 2; i++) {
+          _mesa_hash_table_init(&ctx->di.bindless[i].img_handles, ctx, _mesa_hash_pointer, _mesa_key_pointer_equal);
+-         _mesa_hash_table_init(&ctx->di.bindless[i].tex_handles, ctx, _mesa_hash_pointer, _mesa_key_pointer_equal);
+ 
+          /* allocate 1024 slots and reserve slot 0 */
+-         util_idalloc_init(&ctx->di.bindless[i].tex_slots, ZINK_MAX_BINDLESS_HANDLES);
+-         util_idalloc_alloc(&ctx->di.bindless[i].tex_slots);
+          util_idalloc_init(&ctx->di.bindless[i].img_slots, ZINK_MAX_BINDLESS_HANDLES);
+          util_idalloc_alloc(&ctx->di.bindless[i].img_slots);
+          ctx->di.bindless[i].buffer_infos = malloc(sizeof(VkBufferView) * ZINK_MAX_BINDLESS_HANDLES);
+diff --git a/src/gallium/drivers/zink/zink_context.h b/src/gallium/drivers/zink/zink_context.h
+--- a/src/gallium/drivers/zink/zink_context.h
++++ b/src/gallium/drivers/zink/zink_context.h
+@@ -257,4 +257,6 @@
+ }
+ #endif
+ 
+-#endif
++void zink_texture_handle_unref(struct zink_screen *screen, struct zink_bindless_descriptor *bd);
++
++#endif
+diff --git a/src/gallium/drivers/zink/zink_descriptors.c b/src/gallium/drivers/zink/zink_descriptors.c
+--- a/src/gallium/drivers/zink/zink_descriptors.c
++++ b/src/gallium/drivers/zink/zink_descriptors.c
+@@ -1565,6 +1565,12 @@
+          /* updates are tracked by handle */
+          uint32_t handle = util_dynarray_pop(&ctx->di.bindless[i].updates, uint32_t);
+          bool is_buffer = ZINK_BINDLESS_IS_BUFFER(handle);
++         /* Residency may have been revoked before the first draw flushes this
++          * queue. Such a texture has no descriptor to publish. nullDescriptor
++          * permits a null image view, not a null combined-image sampler.
++          * Re-residency fills img_infos and queues a fresh update. */
++         if (!i && !is_buffer && !ctx->di.bindless[0].img_infos[handle].sampler)
++            continue;
+          VkWriteDescriptorSet wd;
+          wd.sType = VK_STRUCTURE_TYPE_WRITE_DESCRIPTOR_SET;
+          wd.pNext = NULL;
+diff --git a/src/gallium/drivers/zink/zink_device_info.py b/src/gallium/drivers/zink/zink_device_info.py
+--- a/src/gallium/drivers/zink/zink_device_info.py
++++ b/src/gallium/drivers/zink/zink_device_info.py
+@@ -1,4 +1,4 @@
+-# Copyright © 2020 Hoe Hao Cheng
++# Copyright 漏 2020 Hoe Hao Cheng
+ #
+ # Permission is hereby granted, free of charge, to any person obtaining a
+ # copy of this software and associated documentation files (the "Software"),
+@@ -252,6 +252,11 @@
+         alias="vertex_input",
+ 	features=True,
+ 	conditions=["$feats.vertexInputDynamicState"]),
++    Extension("VK_EXT_legacy_vertex_attributes",
++        alias="legacy_vertex",
++        features=True,
++        properties=True,
++        conditions=["$feats.legacyVertexAttributes", "info->have_EXT_vertex_input_dynamic_state"]),
+     Extension("VK_EXT_primitive_topology_list_restart",
+         alias="list_restart",
+ 	features=True,
+diff --git a/src/gallium/drivers/zink/zink_draw.cpp b/src/gallium/drivers/zink/zink_draw.cpp
+--- a/src/gallium/drivers/zink/zink_draw.cpp
++++ b/src/gallium/drivers/zink/zink_draw.cpp
+@@ -10,6 +10,7 @@
+ #include "zink_state.h"
+ #include "zink_surface.h"
+ #include "zink_inlines.h"
++#include "zink_barrier_lifetime.h"
+ 
+ #include "tgsi/tgsi_from_mesa.h"
+ #include "util/hash_table.h"
+@@ -330,9 +331,9 @@
+           * image write binds and image read binds
+           */
+          if (res->write_bind_count[is_compute] && res->bind_count[is_compute] > 1)
+-            _mesa_set_add_pre_hashed(ctx->need_barriers[is_compute], he->hash, res);
+-      }
+-      _mesa_set_remove(need_barriers, he);
++            zink_barrier_add_pre_hashed(ctx->need_barriers[is_compute], he->hash, res);
++      }
++      zink_barrier_remove(need_barriers, he);
+       if (!need_barriers->entries)
+          break;
+    }
+diff --git a/src/gallium/drivers/zink/zink_program.c b/src/gallium/drivers/zink/zink_program.c
+--- a/src/gallium/drivers/zink/zink_program.c
++++ b/src/gallium/drivers/zink/zink_program.c
+@@ -1290,6 +1290,8 @@
+ static void
+ bind_gfx_stage(struct zink_context *ctx, gl_shader_stage stage, struct zink_shader *shader)
+ {
++   if (shader && shader->nir->info.uses_bindless)
++      zink_descriptors_init_bindless(ctx);
+    if (shader && shader->nir->info.num_inlinable_uniforms)
+       ctx->shader_has_inlinable_uniforms_mask |= 1 << stage;
+    else
+@@ -1542,6 +1544,8 @@
+ {
+    struct zink_context *ctx = zink_context(pctx);
+    struct zink_compute_program *comp = cso;
++   if (comp && comp->nir->info.uses_bindless)
++      zink_descriptors_init_bindless(ctx);
+    if (comp && comp->nir->info.num_inlinable_uniforms)
+       ctx->shader_has_inlinable_uniforms_mask |= 1 << MESA_SHADER_COMPUTE;
+    else
+diff --git a/src/gallium/drivers/zink/zink_screen.c b/src/gallium/drivers/zink/zink_screen.c
+--- a/src/gallium/drivers/zink/zink_screen.c
++++ b/src/gallium/drivers/zink/zink_screen.c
+@@ -668,7 +668,8 @@
+       return 1;
+ 
+    case PIPE_CAP_VERTEX_ATTRIB_ELEMENT_ALIGNED_ONLY:
+-      return 1;
++      /* Arbitrary alignment is valid only with the enabled legacy/dynamic features. */
++      return !screen->info.have_EXT_legacy_vertex_attributes;
+ 
+    case PIPE_CAP_GL_CLAMP:
+       return 0;
+@@ -1439,6 +1440,12 @@
+       util_queue_destroy(&screen->flush_queue);
+ 
+    simple_mtx_destroy(&screen->queue_lock);
++   for (unsigned i = 0; i < 2; ++i) {
++      _mesa_hash_table_clear(&screen->texture_handles.table[i].handles, NULL);
++      ralloc_free(screen->texture_handles.table[i].handles.table);
++      util_idalloc_fini(&screen->texture_handles.table[i].slots);
++   }
++   simple_mtx_destroy(&screen->texture_handles.lock);
+    VKSCR(DestroyDevice)(screen->dev, NULL);
+    VKSCR(DestroyInstance)(screen->instance, NULL);
+    util_idalloc_mt_fini(&screen->buffer_ids);
+@@ -2261,6 +2268,11 @@
+    dci.enabledExtensionCount = screen->info.num_extensions;
+ 
+    VkResult result = VKSCR(CreateDevice)(screen->pdev, &dci, NULL, &dev);
++   if (result == VK_SUCCESS)
++      mesa_logi("SMG_LEGACY_VERTEX_ENABLED=%u DYNAMIC=%u NATIVE_UNALIGNED=%u",
++                screen->info.have_EXT_legacy_vertex_attributes,
++                screen->info.have_EXT_vertex_input_dynamic_state,
++                screen->info.legacy_vertex_props.nativeUnalignedPerformance);
+    if (result != VK_SUCCESS)
+       mesa_loge("ZINK: vkCreateDevice failed (%s)", vk_Result_to_str(result));
+    
+@@ -2785,6 +2797,12 @@
+    }
+ 
+    simple_mtx_init(&screen->dt_lock, mtx_plain);
++   simple_mtx_init(&screen->texture_handles.lock, mtx_plain);
++   for (unsigned i = 0; i < 2; ++i) {
++      _mesa_hash_table_init(&screen->texture_handles.table[i].handles, screen, _mesa_hash_pointer, _mesa_key_pointer_equal);
++      util_idalloc_init(&screen->texture_handles.table[i].slots, ZINK_MAX_BINDLESS_HANDLES);
++      util_idalloc_alloc(&screen->texture_handles.table[i].slots); /* reserve zero */
++   }
+ 
+    util_idalloc_mt_init_tc(&screen->buffer_ids);
+ 
+diff --git a/src/gallium/drivers/zink/zink_types.h b/src/gallium/drivers/zink/zink_types.h
+--- a/src/gallium/drivers/zink/zink_types.h
++++ b/src/gallium/drivers/zink/zink_types.h
+@@ -564,6 +564,7 @@
+ 
+    struct util_dynarray unref_resources;
+    struct util_dynarray bindless_releases[2];
++   struct util_dynarray texture_handle_unrefs;
+ 
+    struct util_dynarray persistent_resources;
+    struct util_dynarray zombie_samplers;
+@@ -1209,6 +1210,11 @@
+ 
+ struct zink_screen {
+    struct pipe_screen base;
++   /* Texture handles are shareable. Residency/descriptors remain per context. */
++   struct {
++      simple_mtx_t lock;
++      struct { struct util_idalloc slots; struct hash_table handles; } table[2];
++   } texture_handles;
+ 
+    struct util_dl_library *loader_lib;
+    PFN_vkGetInstanceProcAddr vk_GetInstanceProcAddr;
+@@ -1503,6 +1509,8 @@
+    struct zink_sampler_state *sampler;
+    uint32_t handle;
+    uint32_t access; //PIPE_ACCESS_...
++   int texture_refcount;
++   struct pipe_resource *texture_resource;
+ };
+ 
+ struct zink_rendering_info {
+@@ -1704,9 +1712,7 @@
+       struct zink_resource *descriptor_res[ZINK_DESCRIPTOR_BASE_TYPES][MESA_SHADER_STAGES][PIPE_MAX_SAMPLERS];
+ 
+       struct {
+-         struct util_idalloc tex_slots;
+          struct util_idalloc img_slots;
+-         struct hash_table tex_handles;
+          struct hash_table img_handles;
+          VkBufferView *buffer_infos; //tex, img
+          VkDescriptorImageInfo *img_infos; //tex, img
+diff --git a/src/vulkan/registry/vk.xml b/src/vulkan/registry/vk.xml
+--- a/src/vulkan/registry/vk.xml
++++ b/src/vulkan/registry/vk.xml
+@@ -7748,6 +7748,16 @@
+             <member values="VK_STRUCTURE_TYPE_PHYSICAL_DEVICE_MULTIVIEW_PER_VIEW_VIEWPORTS_FEATURES_QCOM"><type>VkStructureType</type> <name>sType</name></member>
+             <member optional="true"><type>void</type>*            <name>pNext</name></member>
+             <member><type>VkBool32</type>                         <name>multiviewPerViewViewports</name></member>
++        </type>
++        <type category="struct" name="VkPhysicalDeviceLegacyVertexAttributesFeaturesEXT" structextends="VkPhysicalDeviceFeatures2,VkDeviceCreateInfo">
++            <member values="VK_STRUCTURE_TYPE_PHYSICAL_DEVICE_LEGACY_VERTEX_ATTRIBUTES_FEATURES_EXT"><type>VkStructureType</type> <name>sType</name></member>
++            <member optional="true" noautovalidity="true"><type>void</type>*     <name>pNext</name></member>
++            <member><type>VkBool32</type>                                        <name>legacyVertexAttributes</name></member>
++        </type>
++        <type category="struct" name="VkPhysicalDeviceLegacyVertexAttributesPropertiesEXT" structextends="VkPhysicalDeviceProperties2">
++            <member values="VK_STRUCTURE_TYPE_PHYSICAL_DEVICE_LEGACY_VERTEX_ATTRIBUTES_PROPERTIES_EXT"><type>VkStructureType</type> <name>sType</name></member>
++            <member optional="true" noautovalidity="true"><type>void</type>*     <name>pNext</name></member>
++            <member><type>VkBool32</type>                                        <name>nativeUnalignedPerformance</name></member>
+         </type>
+     </types>
+ 
+@@ -20901,10 +20911,15 @@
+                 <type name="VkMutableDescriptorTypeCreateInfoEXT"/>
+             </require>
+         </extension>
+-        <extension name="VK_EXT_extension_496" number="496" author="EXT" contact="Mike Blumenkrantz @zmike" type="device" supported="disabled">
+-            <require>
+-                <enum value="0"                                             name="VK_EXT_EXTENSION_496_SPEC_VERSION"/>
+-                <enum value="&quot;VK_EXT_extension_496&quot;"              name="VK_EXT_EXTENSION_496_EXTENSION_NAME"/>
++        <extension name="VK_EXT_legacy_vertex_attributes" number="496" author="EXT" contact="Mike Blumenkrantz @zmike" type="device" supported="vulkan" ratified="vulkan" depends="VK_EXT_vertex_input_dynamic_state" specialuse="glemulation">
++            <require>
++                <enum value="1"                                                   name="VK_EXT_LEGACY_VERTEX_ATTRIBUTES_SPEC_VERSION"/>
++                <enum value="&quot;VK_EXT_legacy_vertex_attributes&quot;"   name="VK_EXT_LEGACY_VERTEX_ATTRIBUTES_EXTENSION_NAME"/>
++                <enum offset="0" extends="VkStructureType"                        name="VK_STRUCTURE_TYPE_PHYSICAL_DEVICE_LEGACY_VERTEX_ATTRIBUTES_FEATURES_EXT"/>
++                <enum offset="1" extends="VkStructureType"                        name="VK_STRUCTURE_TYPE_PHYSICAL_DEVICE_LEGACY_VERTEX_ATTRIBUTES_PROPERTIES_EXT"/>
++                <type name="VkPhysicalDeviceLegacyVertexAttributesFeaturesEXT"/>
++                <type name="VkPhysicalDeviceLegacyVertexAttributesPropertiesEXT"/>
++                <feature name="legacyVertexAttributes" struct="VkPhysicalDeviceLegacyVertexAttributesFeaturesEXT"/>
+             </require>
+         </extension>
+         <extension name="VK_EXT_extension_497" number="497" author="EXT" contact="Christophe Riccio @christophe" type="device" supported="disabled">

@@ -1,0 +1,4 @@
+* text=auto eol=lf
+# Unified patch context includes blank lines prefixed by a space.
+*.patch text eol=lf -whitespace
+*.sh text eol=lf

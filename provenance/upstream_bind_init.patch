@@ -1,0 +1,76 @@
+From 1e07f58c62619d692a661c6879646f4a4fc6031b Mon Sep 17 00:00:00 2001
+From: Mike Blumenkrantz <michael.blumenkrantz@gmail.com>
+Date: Tue, 2 Sep 2025 10:51:31 -0400
+Subject: [PATCH] zink: do bindless init when binding a bindless shader, not on
+ create
+
+this avoids doing bindless init in multi-context scenarios where one
+context is used solely for shader compilation
+
+Part-of: <https://gitlab.freedesktop.org/mesa/mesa/-/merge_requests/37139>
+---
+ src/gallium/drivers/zink/zink_program.c | 10 +++++-----
+ src/gallium/drivers/zink/zink_types.h   |  1 +
+ 2 files changed, 6 insertions(+), 5 deletions(-)
+
+diff --git a/src/gallium/drivers/zink/zink_program.c b/src/gallium/drivers/zink/zink_program.c
+index 386b52f5d2e5..62ab180b3529 100644
+--- a/src/gallium/drivers/zink/zink_program.c
++++ b/src/gallium/drivers/zink/zink_program.c
+@@ -1532,6 +1532,7 @@ create_compute_program(struct zink_context *ctx, nir_shader *nir)
+    if (!comp)
+       return NULL;
+    simple_mtx_init(&comp->cache_lock, mtx_plain);
++   comp->uses_bindless = nir->info.uses_bindless;
+    comp->scratch_size = nir->scratch_size;
+    comp->nir = nir;
+    comp->num_inlinable_uniforms = nir->info.num_inlinable_uniforms;
+@@ -1820,6 +1821,8 @@ bind_gfx_stage(struct zink_context *ctx, mesa_shader_stage stage, struct zink_sh
+    if (shader) {
+       ctx->shader_stages |= BITFIELD_BIT(stage);
+       ctx->gfx_hash ^= ctx->gfx_stages[stage]->hash;
++      if (shader->info.uses_bindless)
++         zink_descriptors_init_bindless(ctx);
+    } else {
+       ctx->gfx_pipeline_state.modules[stage] = VK_NULL_HANDLE;
+       if (ctx->curr_program)
+@@ -2074,9 +2077,6 @@ zink_create_cs_state(struct pipe_context *pctx,
+    else
+       nir = (struct nir_shader *)shader->prog;
+ 
+-   if (nir->info.uses_bindless)
+-      zink_descriptors_init_bindless(zink_context(pctx));
+-
+    return create_compute_program(zink_context(pctx), nir);
+ }
+ 
+@@ -2101,6 +2101,8 @@ zink_bind_cs_state(struct pipe_context *pctx,
+    if (comp && comp != ctx->curr_compute) {
+       if (ctx->compute_pipeline_state.key.base.nonseamless_cube_mask)
+          ctx->compute_dirty = true;
++      if (comp->uses_bindless)
++         zink_descriptors_init_bindless(ctx);
+    }
+    ctx->curr_compute = comp;
+    zink_select_launch_grid(ctx);
+@@ -2317,8 +2319,6 @@ zink_create_gfx_shader_state(struct pipe_context *pctx, const struct pipe_shader
+ 
+    if (nir->info.stage == MESA_SHADER_FRAGMENT && nir->info.fs.uses_fbfetch_output)
+       zink_descriptor_util_init_fbfetch(zink_context(pctx));
+-   if (nir->info.uses_bindless)
+-      zink_descriptors_init_bindless(zink_context(pctx));
+ 
+    struct zink_shader *zs = zink_shader_create(zink_screen(pctx->screen), nir);
+    if (zink_debug & ZINK_DEBUG_NOBGC)
+diff --git a/src/gallium/drivers/zink/zink_types.h b/src/gallium/drivers/zink/zink_types.h
+index f5a0cfad144b..e06883bf03e4 100644
+--- a/src/gallium/drivers/zink/zink_types.h
++++ b/src/gallium/drivers/zink/zink_types.h
+@@ -1137,6 +1137,7 @@ struct zink_compute_program {
+ 
+    bool use_local_size;
+    bool has_variable_shared_mem;
++   bool uses_bindless;
+ 
+    unsigned scratch_size;
+ 
