@@ -1,68 +1,23 @@
-PUBLIC COPY: local paths in command lines were replaced by environment placeholders for privacy. Outputs and exit statuses are preserved. See docs/BUILD.md for runnable commands.
+PUBLIC COPY: command paths below use environment placeholders instead of private machine roots. Literal stdout/stderr and exit statuses are preserved. These placeholders are not secret values. Set them to local equivalents before running.
 
-THOR SOURCE PREVIEW RELEASE VERIFICATION
-Version: v0.1.0-thor-preview.1
-Changed fields: source-only public export; Mesa need_barriers/update_barriers resource ownership; build paths parameterized.
-No new game patch or device installation performed in this publication task.
-BASELINE/MODIFIED/ROLLBACK below test the SOURCE patch transaction, not a new game replay.
-Mesa source hash normalization: CRLF -> LF. Source copies omit .git, .gitlab-ci and Python caches.
-Full rollback comparison: 8514 regular files match; modified tree remains changed.
-Original local game data, native binaries and saves were not modified.
-Initial export-copy attempt encountered Windows access errors on upstream CI symlinks; metadata excluded and a fresh r2 copy passed.
+ODIN 3 SOURCE PREVIEW RELEASE VERIFICATION
+VERSION=v0.2.0-odin3-preview.1
+CHANGED_BRANCH=release/odin3-preview -> origin/main (normal fast-forward publication)
+CHANGED_FIELDS=Odin source/build profile; presented-video subtitle clock; cross-frame cue trigger; exact-preimage patch/rollback tools.
+BASELINE_SOURCE_COMMIT=b3f1ce8cbda9b89c08e5b0762273f520eaca244c
+BASELINE_SOURCE_ZIP_SHA256=10633c6edd4be80982e60863061f27e5d6d5a539471a607ba54d10f4a501862a
+Source-only release: no APK, game resources, proprietary libraries, raw device logs, save files or signing material.
+No new game installation or live device testing was performed during this publication.
+Historical integrated-game result: matched=6738 unmatched=0 audio_underruns=0; user confirmed subtitle timing.
+The 60 fps video metadata is not a claim of measured game frame rate.
+Independent components compile; this source preview is not a complete game build pipeline.
+Rollback on separate copies restores the original file hashes and the original three host test groups.
+Candidate source and modified local game-file copies remain changed; original inputs remain unchanged.
 
-BASELINE
-EXACT_COMMAND=${PYTHON} tools/mesa_patch.py verify --source ${WORKSPACE}\research\bindless_bridge\mesa-original --state baseline
+BASELINE_HOST
+EXACT_COMMAND=${PYTHON} ${WORKSPACE}\opensource\shield-thor-compat\tools\run_tests.py --java-home "${JAVA_HOME}"
 CWD=${WORKSPACE}\opensource\shield-thor-compat
-INPUT=Pinned Mesa source; 13 affected paths; no game data
-LITERAL_STDOUT:
-MESA_STATE=baseline
-MATCHED_FILES=13
-SOURCE_HASH_CHECK=PASS
-
-LITERAL_STDERR:
-
-EXIT_STATUS=0
-
-MODIFIED
-EXACT_COMMAND=${PYTHON} tools/mesa_patch.py apply --source ${WORKSPACE}\research\bindless_bridge\mesa-original --output ${WORKSPACE}\opensource\.validation\mesa-modified-r2
-CWD=${WORKSPACE}\opensource\shield-thor-compat
-INPUT=Fresh source copy; consolidated 13-file patch
-LITERAL_STDOUT:
-MESA_STATE=baseline
-MATCHED_FILES=13
-SOURCE_HASH_CHECK=PASS
-MESA_STATE=modified
-MATCHED_FILES=13
-SOURCE_HASH_CHECK=PASS
-ORIGINAL_SOURCE_UNCHANGED=1
-PATCH_APPLY_PASS=1
-
-LITERAL_STDERR:
-
-EXIT_STATUS=0
-
-ROLLBACK
-EXACT_COMMAND=${BASH} ${WORKSPACE}\opensource\shield-thor-compat\ROLLBACK.sh --source ${WORKSPACE}\opensource\.validation\mesa-modified-r2 --output ${WORKSPACE}\opensource\.validation\mesa-restored-r2
-CWD=${WORKSPACE}\opensource\shield-thor-compat
-INPUT=PYTHON=${PYTHON}; rollback on another fresh copy, not the modified tree
-LITERAL_STDOUT:
-MESA_STATE=modified
-MATCHED_FILES=13
-SOURCE_HASH_CHECK=PASS
-MESA_STATE=baseline
-MATCHED_FILES=13
-SOURCE_HASH_CHECK=PASS
-ORIGINAL_SOURCE_UNCHANGED=1
-ROLLBACK_PASS=1
-
-LITERAL_STDERR:
-
-EXIT_STATUS=0
-
-HOST_TESTS
-EXACT_COMMAND=${PYTHON} tools/run_tests.py --java-home "${JAVA_HOME}"
-CWD=${WORKSPACE}\opensource\shield-thor-compat
-INPUT=Actual exported Java source; generated data and explicit Android doubles only
+INPUT=Unmodified public source commit b3f1ce8cbda9b89c08e5b0762273f520eaca244c
 LITERAL_STDOUT:
 HOST_EXTRACTION_CHECKS=61 PASS=1
 COLD_COPY_FAST_REOPEN_REPAIR_CANCEL_LOW_SPACE_HASH_FAILURE_COMMIT_FAILURE_PATH_VALIDATION=PASS
@@ -78,21 +33,63 @@ DEVICE_RENDERING_TESTED_BY_THIS_COMMAND=0
 HOST_TEST_GROUPS=3
 HOST_TESTS_PASS=1
 DEVICE_RUNTIME_TESTED_BY_THIS_COMMAND=0
-
 LITERAL_STDERR:
-
 EXIT_STATUS=0
 
-BUILD_COMPONENTS
-EXACT_COMMAND=${PYTHON} tools/build_components.py --java-home "${JAVA_HOME}" --sdk ${ANDROID_SDK} --ndk ${ANDROID_SDK}/ndk/28.2.13676358
+MODIFIED_HOST
+EXACT_COMMAND=${PYTHON} tools/run_tests.py --java-home "${JAVA_HOME}"
 CWD=${WORKSPACE}\opensource\shield-thor-compat
-INPUT=Exported Java/D8/JNI compilation; compiler diagnostics forced to English; no game APK
+INPUT=Exported production helpers + synthetic Android doubles/data; no device
 LITERAL_STDOUT:
+HOST_EXTRACTION_CHECKS=61 PASS=1
+COLD_COPY_FAST_REOPEN_REPAIR_CANCEL_LOW_SPACE_HASH_FAILURE_COMMIT_FAILURE_PATH_VALIDATION=PASS
+ANDROID_FIRST_LAUNCH_TESTED=0
+HOST_CLOCK_CHECKS=21 PASS=1
+MAX_OUTPUTS_PER_CALL=4
+EOS_AND_FORMAT_CODES_PRESERVED=1
+PCM_MODIFICATIONS=0
+DEVICE_AUDIO_QUALITY_TESTED=0
+HOST_LIFECYCLE_CHECKS=614 PASS=1
+RETAIN_REATTACH_CYCLES=100 NATIVE_CREATE_COUNT=1 TEMPORARY_DESTROY_COUNT=0
+DEVICE_RENDERING_TESTED_BY_THIS_COMMAND=0
+TIMELINE: PASS assertions=94129 initial_drop,PTS,coalescing,duplicate,pause,flush,overflow,ring_bounds,30_60_120fps
+HOST_CLOCK_CHECKS=21 PASS=1
+MAX_OUTPUTS_PER_CALL=4
+EOS_AND_FORMAT_CODES_PRESERVED=1
+PCM_MODIFICATIONS=0
+DEVICE_AUDIO_QUALITY_TESTED=0
+ODIN_CLOCK_OBSERVER_CALLED=1 JNI_TESTED=0
+HOST_TEST_GROUPS=6
+HOST_TESTS_PASS=1
+DEVICE_RUNTIME_TESTED_BY_THIS_COMMAND=0
+LITERAL_STDERR:
+test_bad_range (__main__.PatchTests.test_bad_range) ... ok
+test_different_length (__main__.PatchTests.test_different_length) ... ok
+test_double_apply (__main__.PatchTests.test_double_apply) ... ok
+test_expected_bytes (__main__.PatchTests.test_expected_bytes) ... ok
+test_files_and_overwrite_guards (__main__.PatchTests.test_files_and_overwrite_guards) ... ok
+test_output_hash (__main__.PatchTests.test_output_hash) ... ok
+test_overlap (__main__.PatchTests.test_overlap) ... ok
+test_roundtrip (__main__.PatchTests.test_roundtrip) ... ok
+test_wrong_hash (__main__.PatchTests.test_wrong_hash) ... ok
+test_wrong_size (__main__.PatchTests.test_wrong_size) ... ok
+
+----------------------------------------------------------------------
+Ran 10 tests in 0.006s
+
+OK
+EXIT_STATUS=0
+
+BUILD_THOR
+EXACT_COMMAND=${PYTHON} tools/build_components.py --profile thor --sdk ${ANDROID_HOME} --ndk ${ANDROID_HOME}\ndk\28.2.13676358 --java-home "${JAVA_HOME}" --out ${WORKSPACE}\opensource\release-artifacts\odin3-preview.1\build-thor
+CWD=${WORKSPACE}\opensource\shield-thor-compat
+INPUT=Clean standalone component build, Android ARM64; no game APK
+LITERAL_STDOUT:
+BUILD_PROFILE=thor
 JAVA_HELPERS_COMPILED=6
 DEX_COMPILED=1
 ARM64_VIDEO_BRIDGE_COMPILED=1
 GAME_APK_BUILT=0
-
 LITERAL_STDERR:
 warning: [options] bootstrap class path is not set in conjunction with -source 8
   not setting the bootstrap class path may lead to class files that cannot run on JDK 8
@@ -103,56 +100,159 @@ warning: [options] To suppress warnings about obsolete options, use -Xlint:-opti
 Note: Some input files use or override a deprecated API.
 Note: Recompile with -Xlint:deprecation for details.
 4 warnings
-
 EXIT_STATUS=0
 
-BUILD_LIFETIME_PROBE
-EXACT_COMMAND=${PYTHON} tools/build_lifetime_probe.py --mesa-build ${WORKSPACE}\research\bindless_bridge\build-mesa --out ${WORKSPACE}\opensource\.validation\lifetime-probe
+BUILD_ODIN3
+EXACT_COMMAND=${PYTHON} tools/build_components.py --profile odin3 --sdk ${ANDROID_HOME} --ndk ${ANDROID_HOME}\ndk\28.2.13676358 --java-home "${JAVA_HOME}" --out ${WORKSPACE}\opensource\release-artifacts\odin3-preview.1\build-odin3
 CWD=${WORKSPACE}\opensource\shield-thor-compat
-INPUT=Exported probe against the existing configured real Mesa build; compilation only
+INPUT=Clean standalone component build, Android ARM64; no game APK
 LITERAL_STDOUT:
-REAL_MESA_PROBE_BUILT=1
-DEVICE_EXECUTED=0
-
+ARM64_SUBTITLE_BRIDGE_COMPILED=1
+ARM64_STORE_TEST_COMPILED=1
+ARM64_TIMING_HEADERS_COMPILED=1
+NATIVE_TEST_EXECUTED=0
+BUILD_PROFILE=odin3
+JAVA_HELPERS_COMPILED=8
+DEX_COMPILED=1
+ARM64_VIDEO_BRIDGE_COMPILED=1
+GAME_APK_BUILT=0
 LITERAL_STDERR:
-
+warning: [options] bootstrap class path is not set in conjunction with -source 8
+  not setting the bootstrap class path may lead to class files that cannot run on JDK 8
+    --release 8 is recommended instead of -source 8 -target 8 because it sets the bootstrap class path automatically
+warning: [options] source value 8 is obsolete and will be removed in a future release
+warning: [options] target value 8 is obsolete and will be removed in a future release
+warning: [options] To suppress warnings about obsolete options, use -Xlint:-options.
+Note: Some input files use or override a deprecated API.
+Note: Recompile with -Xlint:deprecation for details.
+4 warnings
 EXIT_STATUS=0
 
-PUBLISH_INDEX_AUDIT
-INPUT=Explicit 54-file source allowlist; staged Git blobs, executable rollback mode.
-COMMAND=python tools/audit_release.py --index
+BASELINE_ALF
+EXACT_COMMAND=${PYTHON} tools/subtitle_patch.py verify --kind alf --source ${WORKSPACE}\research\nvsi_contract\assets\smg_prd\product.alf --state baseline
+CWD=${WORKSPACE}\opensource\shield-thor-compat
+INPUT=Exact original local preimage; not uploaded
 LITERAL_STDOUT:
-SOURCE_ALLOWLIST_FILES=54
-PROHIBITED_BINARY_ENTRIES=0
-CREDENTIAL_PATTERN_MATCHES=0
-RELEASE_AUDIT_PASS=1
-
-EXIT_STATUS=0
-Whitespace check passes; unified patch context whitespace is intentionally preserved.
-
-NESTED_GIT_COPY_REGRESSION
-INPUT=Separate new source copies inside the source-release Git checkout; no original tree modified.
-EXACT_COMMAND=${PYTHON} tools/mesa_patch.py apply --source ${WORKSPACE}\research\bindless_bridge\mesa-original --output ${WORKSPACE}\opensource\shield-thor-compat\.build\mesa-apply-check-r2
-LITERAL_STDOUT:
-MESA_STATE=baseline
-MATCHED_FILES=13
-SOURCE_HASH_CHECK=PASS
-MESA_STATE=modified
-MATCHED_FILES=13
-SOURCE_HASH_CHECK=PASS
-ORIGINAL_SOURCE_UNCHANGED=1
-PATCH_APPLY_PASS=1
+SUBTITLE_PATCH=VERIFY KIND=alf RESULT=PASS
+SHA256=a98aac4a7c4914126c77cd22f570069b5b6ce5f06941f5d445028acfe9328be9
+SOURCE_UNCHANGED=1
 LITERAL_STDERR:
 EXIT_STATUS=0
-EXACT_COMMAND=${PYTHON} tools/mesa_patch.py rollback --source ${WORKSPACE}\opensource\shield-thor-compat\.build\mesa-apply-check-r2 --output ${WORKSPACE}\opensource\shield-thor-compat\.build\mesa-rollback-check-r2
+
+MODIFIED_ALF
+EXACT_COMMAND=${PYTHON} tools/subtitle_patch.py apply --kind alf --source ${WORKSPACE}\research\nvsi_contract\assets\smg_prd\product.alf --output ${WORKSPACE}\opensource\release-artifacts\odin3-preview.1\local-patch-alf
+CWD=${WORKSPACE}\opensource\shield-thor-compat
+INPUT=Copy-only patch
 LITERAL_STDOUT:
-MESA_STATE=modified
-MATCHED_FILES=13
-SOURCE_HASH_CHECK=PASS
-MESA_STATE=baseline
-MATCHED_FILES=13
-SOURCE_HASH_CHECK=PASS
-ORIGINAL_SOURCE_UNCHANGED=1
-ROLLBACK_PASS=1
+SUBTITLE_PATCH=APPLY KIND=alf RESULT=PASS
+SHA256=df838a99f820573060f50fb30aeca6ae2f1e784a538e758961df159202fdc1b9
+SOURCE_UNCHANGED=1
+LITERAL_STDERR:
+EXIT_STATUS=0
+
+ROLLBACK_ALF
+EXACT_COMMAND=${BASH} ${WORKSPACE}\opensource\shield-thor-compat\ROLLBACK.sh subtitle --kind alf --source ${WORKSPACE}\opensource\release-artifacts\odin3-preview.1\local-patch-alf --output ${WORKSPACE}\opensource\release-artifacts\odin3-preview.1\local-restored-alf
+CWD=${WORKSPACE}\opensource\shield-thor-compat
+INPUT=Reverse into another new file; keep modified file
+LITERAL_STDOUT:
+SUBTITLE_PATCH=ROLLBACK KIND=alf RESULT=PASS
+SHA256=a98aac4a7c4914126c77cd22f570069b5b6ce5f06941f5d445028acfe9328be9
+SOURCE_UNCHANGED=1
+LITERAL_STDERR:
+EXIT_STATUS=0
+
+BASELINE_NATIVE
+EXACT_COMMAND=${PYTHON} tools/subtitle_patch.py verify --kind native --source ${WORKSPACE}\research\odin3_driver\MODIFIED_libsmg.so --state baseline
+CWD=${WORKSPACE}\opensource\shield-thor-compat
+INPUT=Exact original local preimage; not uploaded
+LITERAL_STDOUT:
+SUBTITLE_PATCH=VERIFY KIND=native RESULT=PASS
+SHA256=5174186fc9256234f52ed52a369fd62a4a4a190c879be17189466e41b800579f
+SOURCE_UNCHANGED=1
+LITERAL_STDERR:
+EXIT_STATUS=0
+
+MODIFIED_NATIVE
+EXACT_COMMAND=${PYTHON} tools/subtitle_patch.py apply --kind native --source ${WORKSPACE}\research\odin3_driver\MODIFIED_libsmg.so --output ${WORKSPACE}\opensource\release-artifacts\odin3-preview.1\local-patch-native
+CWD=${WORKSPACE}\opensource\shield-thor-compat
+INPUT=Copy-only patch
+LITERAL_STDOUT:
+SUBTITLE_PATCH=APPLY KIND=native RESULT=PASS
+SHA256=503862bba615eacdacee27971a4c20e5807b421d39d8b0bcba69adc89c405b61
+SOURCE_UNCHANGED=1
+LITERAL_STDERR:
+EXIT_STATUS=0
+
+ROLLBACK_NATIVE
+EXACT_COMMAND=${BASH} ${WORKSPACE}\opensource\shield-thor-compat\ROLLBACK.sh subtitle --kind native --source ${WORKSPACE}\opensource\release-artifacts\odin3-preview.1\local-patch-native --output ${WORKSPACE}\opensource\release-artifacts\odin3-preview.1\local-restored-native
+CWD=${WORKSPACE}\opensource\shield-thor-compat
+INPUT=Reverse into another new file; keep modified file
+LITERAL_STDOUT:
+SUBTITLE_PATCH=ROLLBACK KIND=native RESULT=PASS
+SHA256=5174186fc9256234f52ed52a369fd62a4a4a190c879be17189466e41b800579f
+SOURCE_UNCHANGED=1
+LITERAL_STDERR:
+EXIT_STATUS=0
+
+ROLLBACK_HOST
+EXACT_COMMAND=${PYTHON} ${WORKSPACE}\opensource\release-artifacts\odin3-preview.1\rollback-source\tools\run_tests.py --java-home "${JAVA_HOME}"
+CWD=${WORKSPACE}\opensource\release-artifacts\odin3-preview.1\rollback-source
+INPUT=Restored baseline source archive in a separate directory
+LITERAL_STDOUT:
+HOST_EXTRACTION_CHECKS=61 PASS=1
+COLD_COPY_FAST_REOPEN_REPAIR_CANCEL_LOW_SPACE_HASH_FAILURE_COMMIT_FAILURE_PATH_VALIDATION=PASS
+ANDROID_FIRST_LAUNCH_TESTED=0
+HOST_CLOCK_CHECKS=21 PASS=1
+MAX_OUTPUTS_PER_CALL=4
+EOS_AND_FORMAT_CODES_PRESERVED=1
+PCM_MODIFICATIONS=0
+DEVICE_AUDIO_QUALITY_TESTED=0
+HOST_LIFECYCLE_CHECKS=614 PASS=1
+RETAIN_REATTACH_CYCLES=100 NATIVE_CREATE_COUNT=1 TEMPORARY_DESTROY_COUNT=0
+DEVICE_RENDERING_TESTED_BY_THIS_COMMAND=0
+HOST_TEST_GROUPS=3
+HOST_TESTS_PASS=1
+DEVICE_RUNTIME_TESTED_BY_THIS_COMMAND=0
+LITERAL_STDERR:
+EXIT_STATUS=0
+
+ROLLBACK_SCRIPT_EXECUTABLE
+EXACT_COMMAND=${BASH} -c "chmod +x \"$1\"; test -x \"$1\" && echo ROLLBACK_EXECUTABLE=1" sh ${WORKSPACE}\opensource\release-artifacts\odin3-preview.1\ROLLBACK.sh
+CWD=${WORKSPACE}\opensource\shield-thor-compat
+INPUT=Mark local recovery script executable
+LITERAL_STDOUT:
+ROLLBACK_EXECUTABLE=1
+LITERAL_STDERR:
+EXIT_STATUS=0
+
+ROLLBACK_SOURCE
+EXACT_COMMAND=${BASH} ${WORKSPACE}\opensource\release-artifacts\odin3-preview.1\ROLLBACK.sh ${WORKSPACE}\opensource\release-artifacts\odin3-preview.1\rollback-script-source
+CWD=${WORKSPACE}\opensource\shield-thor-compat
+INPUT=Pinned baseline source ZIP -> separate new directory; no GitHub or candidate modification
+LITERAL_STDOUT:
+ROLLBACK_SOURCE=PASS FILES=54
+BASELINE_RESTORED=1 MODIFIED_SOURCE_RETAINED=1 GITHUB_UNCHANGED=1
+LITERAL_STDERR:
+EXIT_STATUS=0
+
+ROLLBACK_SCRIPT_HOST
+EXACT_COMMAND=${PYTHON} ${WORKSPACE}\opensource\release-artifacts\odin3-preview.1\rollback-script-source\tools\run_tests.py --java-home "${JAVA_HOME}"
+CWD=${WORKSPACE}\opensource\release-artifacts\odin3-preview.1\rollback-script-source
+INPUT=Source restored by the executable rollback script
+LITERAL_STDOUT:
+HOST_EXTRACTION_CHECKS=61 PASS=1
+COLD_COPY_FAST_REOPEN_REPAIR_CANCEL_LOW_SPACE_HASH_FAILURE_COMMIT_FAILURE_PATH_VALIDATION=PASS
+ANDROID_FIRST_LAUNCH_TESTED=0
+HOST_CLOCK_CHECKS=21 PASS=1
+MAX_OUTPUTS_PER_CALL=4
+EOS_AND_FORMAT_CODES_PRESERVED=1
+PCM_MODIFICATIONS=0
+DEVICE_AUDIO_QUALITY_TESTED=0
+HOST_LIFECYCLE_CHECKS=614 PASS=1
+RETAIN_REATTACH_CYCLES=100 NATIVE_CREATE_COUNT=1 TEMPORARY_DESTROY_COUNT=0
+DEVICE_RENDERING_TESTED_BY_THIS_COMMAND=0
+HOST_TEST_GROUPS=3
+HOST_TESTS_PASS=1
+DEVICE_RUNTIME_TESTED_BY_THIS_COMMAND=0
 LITERAL_STDERR:
 EXIT_STATUS=0

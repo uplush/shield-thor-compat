@@ -1,0 +1,31 @@
+{
+  "version": "v0.2.0-odin3-preview.1",
+  "device": "AYN Odin 3",
+  "android_tested": 15,
+  "gpu_tested": "Adreno 830",
+  "java_overlay": "src/odin3/java",
+  "native_helpers": "src/odin3/native",
+  "environment": {
+    "TU_DEBUG": "sysmem",
+    "GALLIUM_THREAD": null,
+    "ZINK_DEBUG": null
+  },
+  "environment_null_means": "unset, not the string null",
+  "window_rate_hint_hz": 60,
+  "window_rate_hint_seamless_only": true,
+  "gl_owner_timer_slack_ns": 10000,
+  "reduce_render_resolution": false,
+  "change_system_performance_mode": false,
+  "disable_threaded_submission": false,
+  "tested_driver": {
+    "release": "https://github.com/whitebelyash/AdrenoToolsDrivers/releases/tag/stu_v2",
+    "asset": "https://github.com/whitebelyash/AdrenoToolsDrivers/releases/download/stu_v2/stable-turnip-sync-V2.zip",
+    "source_repository": "https://github.com/whitebelyash/mesa-unified",
+    "source_branch": "turnip/26.2",
+    "library": "libvulkan_freedreno.so",
+    "library_sha256": "5163c03f6ce9784b0cf5ba0d17372bee6f1bae61c9588de20ec85f3b8e5ab720",
+    "bundled": false,
+    "source_commit_pinned": false
+  },
+  "standalone_game_build": false
+}

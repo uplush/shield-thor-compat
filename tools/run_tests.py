@@ -6,6 +6,7 @@ import os
 from pathlib import Path
 import shutil
 import subprocess
+import sys
 
 ROOT = Path(__file__).resolve().parents[1]
 
@@ -34,6 +35,18 @@ def main():
         args = [java, '-cp', str(out), main]
         if test == 'bundle': args.append(str(out))
         subprocess.run(args, check=True)
-    print('HOST_TEST_GROUPS=3\nHOST_TESTS_PASS=1\nDEVICE_RUNTIME_TESTED_BY_THIS_COMMAND=0')
+    package = 'com/nvidia/lightspeed/mediaplayer'
+    extra = [
+        ('subtitle', 'TimelineTest', [ROOT/'src/odin3/java'/package/'SubtitleTimeline.java', ROOT/'tests/subtitle/TimelineTest.java']),
+        ('odin3_clock', 'OdinClockTest', [ROOT/'src/odin3/java'/package/'PortMovie.java',
+            *sorted((ROOT/'tests/clock').rglob('*.java')), *sorted((ROOT/'tests/odin3_clock').rglob('*.java'))]),
+    ]
+    for test, main, sources in extra:
+        out = a.out.resolve()/test
+        out.mkdir(parents=True, exist_ok=True)
+        subprocess.run([javac, '-encoding', 'UTF-8', '-d', str(out), *map(str,sources)], check=True)
+        subprocess.run([java, '-cp', str(out), main], check=True)
+    subprocess.run([sys.executable,str(ROOT/'tests/subtitle/test_patch.py')],check=True)
+    print('HOST_TEST_GROUPS=6\nHOST_TESTS_PASS=1\nDEVICE_RUNTIME_TESTED_BY_THIS_COMMAND=0')
 
 if __name__ == '__main__': main()

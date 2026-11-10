@@ -1,91 +1,72 @@
-# Shield → Thor compatibility research
+# Shield → Thor / Odin 3 compatibility research
 
-**索尔（AYN Thor）源码预览版 · v0.1.0-thor-preview.1**
+**奥丁 3（AYN Odin 3）源码预览版 · v0.2.0-odin3-preview.1**
 
-面向神盾 Android 版《超级马力欧银河》的独立兼容研究。这里发布可独立整理的适配组件、
-Mesa 修改补丁、测试与技术说明，**不是游戏开源版，也不含游戏安装包**。
+面向神盾 Android 版《超级马力欧银河》的独立兼容研究。
+本版在索尔组件基础上，整理奥丁 3 配置、局部性能适配及最新过场字幕同步修复。
 项目与 Nintendo、NVIDIA、AYN 无隶属或认可关系。
 
-> **下载前请看：本版是开发者源码预览，不是可直接安装的 APK。**
-> 下面的命令可以编译兼容组件、验证并应用 Mesa 补丁；仅克隆本仓库还不能重建完整游戏移植版。
-> 原游戏调用点接入、部分着色器规则、私有接口适配与端到端打包流程尚未整理进本次公开版本。
-> 使用这些模块不等于已获得游戏文件的再分发授权。
+> **这是开发者源码预览，不是可直接安装的游戏 APK。**
+> 仓库提供独立兼容组件、补丁、测试和接入说明，不包含游戏本体或资源。
+> 克隆仓库可以构建帮助类和 JNI 库，但还不能一键重建完整移植版。
+> 原游戏调用点、部分私有接口与着色器规则、资源重新封装及完整 APK 打包流程仍不在该预览中。
 
-## 本版内容
+## 版本与验证状态
 
-| 目录 | 内容 |
+| 版本 | 状态 |
 |---|---|
-| `src/java/` | 过场视频桥接、有限追帧、后台 Surface 保留、资源准备/校验 |
-| `src/native/video_upload.c` | Android 视频 RGBA → 应用内私有 Mesa 纹理的 JNI 上传 |
-| `patches/mesa-thor.patch` | 相对固定 Mesa fork 的完整 13 文件差异，包括共享 bindless、legacy vertex、barrier 生命周期修复 |
-| `tools/` | 独立组件编译、主机测试、带哈希检查的补丁应用与回滚 |
-| `tests/` | 合成资源测试、Android API 替身、使用真实 Mesa 类型/API 的原生生命周期测试 |
-| `docs/` | 架构、构建/接入说明、脱敏实测摘要和发布说明 |
-| `provenance/`、`LICENSES/` | 源码来源、上游补丁原始署名与许可 |
+| [奥丁 3 v0.2.0](https://github.com/uplush/shield-thor-compat/releases/tag/v0.2.0-odin3-preview.1) | 本地集成版实机测试通过；用户确认字幕出现时机正常 |
+| [索尔 v0.1.0](https://github.com/uplush/shield-thor-compat/releases/tag/v0.1.0-thor-preview.1) | 保留原发布；两次独立开场过场回归通过 |
 
-**仓库不包含**：游戏资源、APK/DEX/原厂私有库、反编译游戏类、提取的游戏着色器、
-签名材料、设备标识、存档或设备原始日志。Java 的原有包名仅为本地接入 ABI 保持兼容，
-这些新增类不是 NVIDIA 官方开源代码。
+奥丁 3 最近一轮开场过场自然播完，6738 次提交成功关联、未匹配 0，
+对应音轨欠载 0，返回游戏后进程仍在；用户确认字幕时机正常。
+**这些是本地集成游戏的历史实测，不是本次公开源码单独构建完整游戏的结果。**
+保持原画质；当前帧率已获用户接受，但不宣称所有场景恒定 60 FPS。
+其他过场、全流程通关和长期稳定性尚待验证。
 
-## 已验证与未验证
+## 本版新增
 
-本次源码来自在索尔上通过测试的本地实验版本：
+- `profiles/odin3.json`：奥丁 3 驱动/提交配置，保留正常线程队列与原渲染质量。
+- `src/odin3/java/`：字幕时钟按实际上传的视频 PTS 前进，避免解码进度/提交计数与显示画面漂移。
+- `src/odin3/native/`：字幕 JNI、60 Hz 窗口提示、GL 线程定时器合并容差恢复逻辑。
+- `patches/odin3-subtitle.json`：严格匹配指定原文件哈希的小范围补丁；字幕触发改为跨帧区间检测。
+- 新增时间轴、奥丁视频追帧及补丁工具回归；索尔原有测试继续保留。
 
-- 两次独立进程启动后，开场库巴过场均自然播放完毕：5368 / 5360 帧。
-- 两轮对应音轨欠载均为 0；用户确认画面、声音连续同步，返回游戏后移动/跳跃正常。
-- 这些是**本地集成 APK 的历史实测**，不是仅凭本仓库源码构建出的游戏的测试结果。
-- 主机测试和独立组件编译结果见 [VERIFICATION.txt](VERIFICATION.txt)。
-- 未验证全流程通关、所有过场、长期稳定性；没有保证恒定 60 FPS。
-- **奥丁 3 尚未实机验证**，本版不宣称支持所有 Android 掌机。
-
-详见 [测试记录](docs/TESTING.md) 和 [发布说明](docs/RELEASE_NOTES.md)。
+原有 `src/java/`、`src/native/` 和 Mesa 13 文件补丁仍保留。
+索尔历史说明见 [原发布](https://github.com/uplush/shield-thor-compat/tree/v0.1.0-thor-preview.1)。
+仓库名称保持不变，避免破坏既有链接。
 
 ## 快速开始
 
-主机测试需要 Python 3.10+ 和 JDK 11+（本机验证使用 Python 3.14 / Android Studio JBR）：
+依赖：Python 3.10+、JDK 11+、Android SDK Platform 35 / Build Tools 35.0.0、NDK r28c。
 
 ```sh
 python tools/run_tests.py --java-home /path/to/jdk
-```
-
-编译 Java / DEX 与 ARM64 视频 JNI，**不构建或安装游戏 APK**：
-
-```sh
-python tools/build_components.py \
-  --sdk /path/to/android-sdk \
-  --ndk /path/to/android-ndk-r28c \
+python tools/build_components.py --profile odin3 \
+  --sdk /path/to/android-sdk --ndk /path/to/android-ndk-r28c \
   --java-home /path/to/jdk
 ```
 
-使用 SDK Platform 35、Build Tools 35.0.0、NDK 28.2.13676358。
-产物在 `.build/components/`：`port-helpers.jar`、`dex/classes.dex`、`libsmg_video.so`。
-首次预览只对 Windows 构建实际执行了验证；其他主机的路径支持仍待测试。
+默认 `--profile thor` 继续编译原六个帮助类；奥丁配置编译八个帮助类及两个 JNI 库。
+每次构建请使用新的/空的输出目录（`--out`），防止两种配置残留类混合。
+编译不会安装应用、连接设备或改动存档；本轮实际验证的构建主机为 Windows。
 
-Mesa 基线**不是任意上游 23.0.4**，而是 Swung0x48/mesa 的固定提交
-`9ea0decb3176d34e578c3c603fd9c8e29b580f71`。准备好该源码后：
+- [奥丁 3 接入与字幕原理](docs/ODIN3.md)
+- [通用构建与 Mesa 接入](docs/BUILD.md)
+- [测试范围](docs/TESTING.md)、[确切发布验证记录](VERIFICATION.txt)
+- [发布说明](docs/RELEASE_NOTES.md)、[来源与第三方许可](THIRD_PARTY_NOTICES.md)
 
-```sh
-python tools/mesa_patch.py verify --source /path/to/mesa-base --state baseline
-python tools/mesa_patch.py apply --source /path/to/mesa-base --output /path/to/mesa-thor
-# 回滚到另一份新目录，保留 mesa-thor 与最初源码：
-sh ROLLBACK.sh --source /path/to/mesa-thor --output /path/to/mesa-restored
-```
+## 发布内容与许可
 
-输出目录必须尚不存在且与输入互不嵌套。源码复制会排除 `.git`、`.gitlab-ci` 和 Python 缓存；
-补丁涉及文件统一为 LF 换行，按清单验证 SHA-256。完整依赖与接入契约见 [BUILD.md](docs/BUILD.md)。
+仅发布审阅的文本源码、少量补丁数据、文档、测试和许可。
+不包含 APK/DEX、游戏资源、原厂私有库、反编译游戏类、提取的游戏着色器、
+存档、原始设备日志、设备标识或签名材料。
+原创组件使用 [MIT](LICENSE)，上游部分保留原许可；游戏文件的权利不随本项目许可转移。
+新增 Java 类保留原包名用于接口接入，不代表 NVIDIA 官方代码。
 
-## 许可与贡献
+欢迎提交脱敏的设备型号、Android 版本、测试版本、复现步骤与小型补丁。
 
-本项目原创部分使用 [MIT](LICENSE)；Mesa/Khronos 等第三方部分遵循各自原始许可。
-见 [第三方说明](THIRD_PARTY_NOTICES.md)。请保留来源署名；不要把整棵 Mesa 都重新标为本项目原创。
-
-欢迎提交可复现的兼容问题和小型补丁。问题报告建议包括：设备型号、Android 版本、
-测试版本、复现步骤、是否影响音视频/后台恢复；日志请先移除账号、设备标识和本地路径。
-请勿在 issue / PR / release 中上传游戏文件、存档或签名材料。
-
----
-
-**English summary:** Source-only preview of independent compatibility components and a pinned
-Mesa patch set for AYN Thor. No game files, APK, private vendor binaries, extracted shaders or
-complete game rebuild pipeline are distributed. Two historical local integrated-game cutscene
-runs passed; this is not a full-game stability certification. Odin 3 remains untested.
+**English:** Source-only compatibility preview for AYN Odin 3 and Thor. The Odin profile adds
+presented-video subtitle timing, exact-preimage patch tooling and application-local timing hints.
+Historical integrated-game tests passed; this repository is not a complete game rebuild pipeline.
+No game binaries/assets, signing material or private device data are distributed.

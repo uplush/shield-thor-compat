@@ -1,0 +1,54 @@
+{
+  "schema": 1,
+  "description": "Exact tested preimages only; both parts and Java call-site integration are required.",
+  "parts": {
+    "alf": {
+      "size": 11104386,
+      "baseline_sha256": "a98aac4a7c4914126c77cd22f570069b5b6ce5f06941f5d445028acfe9328be9",
+      "modified_sha256": "df838a99f820573060f50fb30aeca6ae2f1e784a538e758961df159202fdc1b9",
+      "patches": [
+        {
+          "address": 2151534004,
+          "offset": 4033976,
+          "old": "000000000000000000000000",
+          "new": "380000009003002848126374",
+          "label": "reset previous frame then tail-call LayoutActor.appear"
+        },
+        {
+          "address": 2151534036,
+          "offset": 4034008,
+          "old": "4812635d",
+          "new": "4bffffe1",
+          "label": "reset each movie appearance"
+        },
+        {
+          "address": 2153727976,
+          "offset": 6227948,
+          "old": "000000000000000000000000000000000000000000000000",
+          "new": "801f00287c03000040800008907f00287c7e1b784e800020",
+          "label": "snapshot plus backward-clock guard"
+        },
+        {
+          "address": 2151535948,
+          "offset": 4035920,
+          "old": "83bf002448000050807f00207c04e8507c001670806300007c800194480008597c7e1b784819a3217c03f00040820024807d00004806c061807d000081830000818c00247d8903a64e800421480000203bbd0004801f002c809f00245400103a7c0402147c1d00404082ffa0",
+          "new": "4819a345482172993ba000004800004c807f0020806300007fa4eb78480008597c1e180041800030801f00287c00180040800024807f002457a0103a7c63002e4806c055807f002457a0103a7c63002e480005153bbd0001801f002c7c1d00004180ffb093df002860000000",
+          "label": "exact-equality loop -> previous < cue <= presented; no per-cue offset"
+        }
+      ]
+    },
+    "native": {
+      "size": 10116608,
+      "baseline_sha256": "5174186fc9256234f52ed52a369fd62a4a4a190c879be17189466e41b800579f",
+      "modified_sha256": "503862bba615eacdacee27971a4c20e5807b421d39d8b0bcba69adc89c405b61",
+      "patches": [
+        {
+          "offset": 5418516,
+          "old": "73620091",
+          "new": "05000014",
+          "label": "disable delivery-count update; presented PTS is authoritative"
+        }
+      ]
+    }
+  }
+}

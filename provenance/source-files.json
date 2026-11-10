@@ -180,5 +180,68 @@
     "original_sha256": "e086f202b069934a345305ce99f992d3c54db88134b02258445765a586403b37",
     "exported_sha256": "f8feb37f2a601a56207d40f712a9aef969b5f42899b6079b72b21e74b4c7a9b9",
     "change": "MIT notice added; LF line endings; executable logic unchanged"
+  },
+  {
+    "source": "research/subtitle_timing/fix/PortMovie.java",
+    "destination": "src/odin3/java/com/nvidia/lightspeed/mediaplayer/PortMovie.java",
+    "original_sha256": "77b949330e3c0706b9c3aca6d77a8d8d53fea051f9f6dfa888b7d4b6108c4301",
+    "exported_sha256": "741646edf05068c581041e16d24cd1cec4c2b3bb94796d0bc564c66a01682e68",
+    "change": "MIT notice added; LF line endings; executable logic unchanged"
+  },
+  {
+    "source": "research/subtitle_timing/fix/PortSubtitle.java",
+    "destination": "src/odin3/java/com/nvidia/lightspeed/mediaplayer/PortSubtitle.java",
+    "original_sha256": "b0899f16876ddcd1051b4b64161a1fd0d2ff60a78627b3a7404a784525555378",
+    "exported_sha256": "f486e4a3bf082e90f3c18c025da53c3783212af6692833bbf00199816d7c04d4",
+    "change": "MIT notice added; LF line endings; executable logic unchanged"
+  },
+  {
+    "source": "research/subtitle_timing/fix/SubtitleTimeline.java",
+    "destination": "src/odin3/java/com/nvidia/lightspeed/mediaplayer/SubtitleTimeline.java",
+    "original_sha256": "7c62b834c7c3075efc69647c8639e62d9eddb537d1c93455e2b9ea4cac720248",
+    "exported_sha256": "a0c0a4c7a6a85fe5705649afd68ca8e8c556e9a18fe14a3fef8cbd7a1662214f",
+    "change": "MIT notice added; LF line endings; executable logic unchanged"
+  },
+  {
+    "source": "research/subtitle_timing/fix/subtitle_native.c",
+    "destination": "src/odin3/native/subtitle_native.c",
+    "original_sha256": "8a3c81ce45c442e601b6eb68992b04fd1cd02cb4d86a4a811e330b67141c73e4",
+    "exported_sha256": "2769e81aa748a8f4156761b5bb060107bc17927c773294994ed29ccfcf1a3305",
+    "change": "MIT notice added; LF line endings; executable logic unchanged"
+  },
+  {
+    "source": "research/subtitle_timing/fix/subtitle_store.h",
+    "destination": "src/odin3/native/subtitle_store.h",
+    "original_sha256": "3a3820cc7d748ee2c6052dc4d73d93c5b0bbc162b07ecbd65826be719fab63cc",
+    "exported_sha256": "cab4742aabe08dad894098430b74016d5fee08ceb1c568a42f94151690846caf",
+    "change": "MIT notice added; LF line endings; executable logic unchanged"
+  },
+  {
+    "source": "research/subtitle_timing/fix/TimelineTest.java",
+    "destination": "tests/subtitle/TimelineTest.java",
+    "original_sha256": "d01381e78f53e191e65dc48a21b98f102121203a9953743ca4b67b564a6aaa3f",
+    "exported_sha256": "1eef14c0a10bb73433450b9710a878d8ed4d235f9fb25cd9f17e326254bf118c",
+    "change": "MIT notice added; LF line endings; executable logic unchanged"
+  },
+  {
+    "source": "research/subtitle_timing/fix/native_test.c",
+    "destination": "tests/subtitle/native_test.c",
+    "original_sha256": "71c1abad9d62791e94f4925a22a643bf66f2789948722060bed9935927509e98",
+    "exported_sha256": "a47736d14b872a0e797e7b30fdf2544d340d69f06d714b9fbe6de34c74cefa82",
+    "change": "MIT notice added; LF line endings; executable logic unchanged"
+  },
+  {
+    "source": "research/odin3_performance/thread_timing/wrapper/thread_timing.h",
+    "destination": "src/odin3/native/thread_timing.h",
+    "original_sha256": "b4abcc7f4869ba3bab61338b54389e0294afb43a982701a34a8792f486408520",
+    "exported_sha256": "e2392e0dbde471b860940b9a953361f9f055f1bce8e01d9eac6061b6c23453bf",
+    "change": "MIT notice added; LF line endings; executable logic unchanged"
+  },
+  {
+    "source": "research/odin3_performance/thread_timing/wrapper/frame_rate_hint.h",
+    "destination": "src/odin3/native/frame_rate_hint.h",
+    "original_sha256": "b9e487dfd760d9ebf9b6de4f256fe597e4d769adc2a933e1151f597abd094d10",
+    "exported_sha256": "0264cc9e7d077e04132da88ce777b49f3fbb18bec66e44541ec8ebca39f3236b",
+    "change": "MIT notice added; LF line endings; executable logic unchanged"
   }
 ]

@@ -1,0 +1,158 @@
+PUBLIC COPY: local paths in command lines were replaced by environment placeholders for privacy. Outputs and exit statuses are preserved. See docs/BUILD.md for runnable commands.
+
+THOR SOURCE PREVIEW RELEASE VERIFICATION
+Version: v0.1.0-thor-preview.1
+Changed fields: source-only public export; Mesa need_barriers/update_barriers resource ownership; build paths parameterized.
+No new game patch or device installation performed in this publication task.
+BASELINE/MODIFIED/ROLLBACK below test the SOURCE patch transaction, not a new game replay.
+Mesa source hash normalization: CRLF -> LF. Source copies omit .git, .gitlab-ci and Python caches.
+Full rollback comparison: 8514 regular files match; modified tree remains changed.
+Original local game data, native binaries and saves were not modified.
+Initial export-copy attempt encountered Windows access errors on upstream CI symlinks; metadata excluded and a fresh r2 copy passed.
+
+BASELINE
+EXACT_COMMAND=${PYTHON} tools/mesa_patch.py verify --source ${WORKSPACE}\research\bindless_bridge\mesa-original --state baseline
+CWD=${WORKSPACE}\opensource\shield-thor-compat
+INPUT=Pinned Mesa source; 13 affected paths; no game data
+LITERAL_STDOUT:
+MESA_STATE=baseline
+MATCHED_FILES=13
+SOURCE_HASH_CHECK=PASS
+
+LITERAL_STDERR:
+
+EXIT_STATUS=0
+
+MODIFIED
+EXACT_COMMAND=${PYTHON} tools/mesa_patch.py apply --source ${WORKSPACE}\research\bindless_bridge\mesa-original --output ${WORKSPACE}\opensource\.validation\mesa-modified-r2
+CWD=${WORKSPACE}\opensource\shield-thor-compat
+INPUT=Fresh source copy; consolidated 13-file patch
+LITERAL_STDOUT:
+MESA_STATE=baseline
+MATCHED_FILES=13
+SOURCE_HASH_CHECK=PASS
+MESA_STATE=modified
+MATCHED_FILES=13
+SOURCE_HASH_CHECK=PASS
+ORIGINAL_SOURCE_UNCHANGED=1
+PATCH_APPLY_PASS=1
+
+LITERAL_STDERR:
+
+EXIT_STATUS=0
+
+ROLLBACK
+EXACT_COMMAND=${BASH} ${WORKSPACE}\opensource\shield-thor-compat\ROLLBACK.sh --source ${WORKSPACE}\opensource\.validation\mesa-modified-r2 --output ${WORKSPACE}\opensource\.validation\mesa-restored-r2
+CWD=${WORKSPACE}\opensource\shield-thor-compat
+INPUT=PYTHON=${PYTHON}; rollback on another fresh copy, not the modified tree
+LITERAL_STDOUT:
+MESA_STATE=modified
+MATCHED_FILES=13
+SOURCE_HASH_CHECK=PASS
+MESA_STATE=baseline
+MATCHED_FILES=13
+SOURCE_HASH_CHECK=PASS
+ORIGINAL_SOURCE_UNCHANGED=1
+ROLLBACK_PASS=1
+
+LITERAL_STDERR:
+
+EXIT_STATUS=0
+
+HOST_TESTS
+EXACT_COMMAND=${PYTHON} tools/run_tests.py --java-home "${JAVA_HOME}"
+CWD=${WORKSPACE}\opensource\shield-thor-compat
+INPUT=Actual exported Java source; generated data and explicit Android doubles only
+LITERAL_STDOUT:
+HOST_EXTRACTION_CHECKS=61 PASS=1
+COLD_COPY_FAST_REOPEN_REPAIR_CANCEL_LOW_SPACE_HASH_FAILURE_COMMIT_FAILURE_PATH_VALIDATION=PASS
+ANDROID_FIRST_LAUNCH_TESTED=0
+HOST_CLOCK_CHECKS=21 PASS=1
+MAX_OUTPUTS_PER_CALL=4
+EOS_AND_FORMAT_CODES_PRESERVED=1
+PCM_MODIFICATIONS=0
+DEVICE_AUDIO_QUALITY_TESTED=0
+HOST_LIFECYCLE_CHECKS=614 PASS=1
+RETAIN_REATTACH_CYCLES=100 NATIVE_CREATE_COUNT=1 TEMPORARY_DESTROY_COUNT=0
+DEVICE_RENDERING_TESTED_BY_THIS_COMMAND=0
+HOST_TEST_GROUPS=3
+HOST_TESTS_PASS=1
+DEVICE_RUNTIME_TESTED_BY_THIS_COMMAND=0
+
+LITERAL_STDERR:
+
+EXIT_STATUS=0
+
+BUILD_COMPONENTS
+EXACT_COMMAND=${PYTHON} tools/build_components.py --java-home "${JAVA_HOME}" --sdk ${ANDROID_SDK} --ndk ${ANDROID_SDK}/ndk/28.2.13676358
+CWD=${WORKSPACE}\opensource\shield-thor-compat
+INPUT=Exported Java/D8/JNI compilation; compiler diagnostics forced to English; no game APK
+LITERAL_STDOUT:
+JAVA_HELPERS_COMPILED=6
+DEX_COMPILED=1
+ARM64_VIDEO_BRIDGE_COMPILED=1
+GAME_APK_BUILT=0
+
+LITERAL_STDERR:
+warning: [options] bootstrap class path is not set in conjunction with -source 8
+  not setting the bootstrap class path may lead to class files that cannot run on JDK 8
+    --release 8 is recommended instead of -source 8 -target 8 because it sets the bootstrap class path automatically
+warning: [options] source value 8 is obsolete and will be removed in a future release
+warning: [options] target value 8 is obsolete and will be removed in a future release
+warning: [options] To suppress warnings about obsolete options, use -Xlint:-options.
+Note: Some input files use or override a deprecated API.
+Note: Recompile with -Xlint:deprecation for details.
+4 warnings
+
+EXIT_STATUS=0
+
+BUILD_LIFETIME_PROBE
+EXACT_COMMAND=${PYTHON} tools/build_lifetime_probe.py --mesa-build ${WORKSPACE}\research\bindless_bridge\build-mesa --out ${WORKSPACE}\opensource\.validation\lifetime-probe
+CWD=${WORKSPACE}\opensource\shield-thor-compat
+INPUT=Exported probe against the existing configured real Mesa build; compilation only
+LITERAL_STDOUT:
+REAL_MESA_PROBE_BUILT=1
+DEVICE_EXECUTED=0
+
+LITERAL_STDERR:
+
+EXIT_STATUS=0
+
+PUBLISH_INDEX_AUDIT
+INPUT=Explicit 54-file source allowlist; staged Git blobs, executable rollback mode.
+COMMAND=python tools/audit_release.py --index
+LITERAL_STDOUT:
+SOURCE_ALLOWLIST_FILES=54
+PROHIBITED_BINARY_ENTRIES=0
+CREDENTIAL_PATTERN_MATCHES=0
+RELEASE_AUDIT_PASS=1
+
+EXIT_STATUS=0
+Whitespace check passes; unified patch context whitespace is intentionally preserved.
+
+NESTED_GIT_COPY_REGRESSION
+INPUT=Separate new source copies inside the source-release Git checkout; no original tree modified.
+EXACT_COMMAND=${PYTHON} tools/mesa_patch.py apply --source ${WORKSPACE}\research\bindless_bridge\mesa-original --output ${WORKSPACE}\opensource\shield-thor-compat\.build\mesa-apply-check-r2
+LITERAL_STDOUT:
+MESA_STATE=baseline
+MATCHED_FILES=13
+SOURCE_HASH_CHECK=PASS
+MESA_STATE=modified
+MATCHED_FILES=13
+SOURCE_HASH_CHECK=PASS
+ORIGINAL_SOURCE_UNCHANGED=1
+PATCH_APPLY_PASS=1
+LITERAL_STDERR:
+EXIT_STATUS=0
+EXACT_COMMAND=${PYTHON} tools/mesa_patch.py rollback --source ${WORKSPACE}\opensource\shield-thor-compat\.build\mesa-apply-check-r2 --output ${WORKSPACE}\opensource\shield-thor-compat\.build\mesa-rollback-check-r2
+LITERAL_STDOUT:
+MESA_STATE=modified
+MATCHED_FILES=13
+SOURCE_HASH_CHECK=PASS
+MESA_STATE=baseline
+MATCHED_FILES=13
+SOURCE_HASH_CHECK=PASS
+ORIGINAL_SOURCE_UNCHANGED=1
+ROLLBACK_PASS=1
+LITERAL_STDERR:
+EXIT_STATUS=0

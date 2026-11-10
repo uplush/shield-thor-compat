@@ -35,6 +35,14 @@ Do not apply the reference patches a second time.
 
 ## Components not redistributed here
 
+The Odin 3 runtime profile references the separately distributed Stable Turnip sync V2
+release by whitebelyash:
+<https://github.com/whitebelyash/AdrenoToolsDrivers/releases/tag/stu_v2>.
+The profile records the tested library hash and the upstream source branch reference;
+this repository does not bundle that library or claim a pinned, reproducible build of it.
+The small Odin subtitle patch definitions contain only exact-version modification
+regions, not the input game binaries, subtitle dialogue or extracted cue tables.
+
 Android SDK/NDK, JDK, libdrm, Turnip, system libraries, original game code/resources,
 and private vendor libraries are not bundled in this source release.
 Using their names to describe interfaces or dependencies does not relicense them.

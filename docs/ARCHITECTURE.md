@@ -6,6 +6,9 @@
 
 ## 本次公开模块
 
+奥丁 3 在这些共同模块之上增加了实际上传帧 PTS 字幕时钟、跨帧触发及局部定时提示。
+具体调用顺序、版本限制与回滚方式见 [ODIN3.md](ODIN3.md)。
+
 ### 视频：PortVideo + video_upload.c
 
 `PortVideo` 自有的 Android EGL/GLES 上下文从解码器 SurfaceTexture/OES 取图，
